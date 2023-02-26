@@ -347,6 +347,7 @@ internal static class InternalGenerator
         if (modifiers.IsPartial)
             list.Add(SyntaxFactory.Token(SyntaxKind.PartialKeyword));
 
+        // Modified
         list = list.Select(x => x.WithTrailingTrivia(SyntaxFactory.Space)).ToList();
 
         return SyntaxFactory.TokenList(list);

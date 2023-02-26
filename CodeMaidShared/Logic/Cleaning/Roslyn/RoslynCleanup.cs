@@ -75,3 +75,11 @@ internal class RoslynCleanup : CSharpSyntaxRewriter
         Global.Workspace.TryApplyChanges(document.Project.Solution);
     }
 }
+
+public class AddAccessorCleanupMiddleware
+{
+    public SyntaxNode Process(SyntaxNode original, SyntaxNode newNode)
+    {
+
+    }
+}
