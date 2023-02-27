@@ -2,10 +2,10 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
-using Microsoft.VisualStudio.PlatformUI;
 using SteveCadwallader.CodeMaid.Logic.Cleaning;
 using SteveCadwallader.CodeMaid.Properties;
 using System;
+using System.Linq;
 
 namespace CodeMaidShared.Logic.Cleaning;
 
@@ -94,6 +94,28 @@ internal class RoslynInsertExplicitAccessModifierLogic
         }
 
         var preferredAccessibility = AddAccessibilityModifiersHelpers.GetPreferredAccessibility(symbol);
+
+        if(original is SyntaxToken cl)
+        {
+            //var f = cl.DescendantNodesAndTokens().First();
+            //var t = f.GetLeadingTrivia();
+            ////var t = cl.GetLeadingTrivia();
+
+            //var newTrivia = t.Add(SyntaxFactory.EndOfLine(""));
+
+            //var fir = f.WithLeadingTrivia(newTrivia);
+
+            //newNode = newNode.WithLeadingTrivia(newTrivia);
+
+            //var f = cl.DescendantNodesAndTokens().First();
+            //var t = f.GetLeadingTrivia();
+            var t = cl.GetLeadingTrivia();
+
+            var newTrivia = t.Add(SyntaxFactory.EndOfLine("")).Add(SyntaxFactory.EndOfLine("")).Add(SyntaxFactory.EndOfLine(""));
+            newNode = newNode.WithLeadingTrivia(newTrivia);
+        }
+
+
         return InternalGenerator.WithAccessibility(newNode, preferredAccessibility);
         //return _syntaxGenerator.WithAccessibility(newNode, preferredAccessibility);
     }
