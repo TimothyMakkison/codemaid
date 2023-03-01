@@ -7,126 +7,130 @@ using SteveCadwallader.CodeMaid.Properties;
 using System;
 using System.Linq;
 
-namespace CodeMaidShared.Logic.Cleaning;
-
-/// <summary>
-/// A class for encapsulating insertion of explicit access modifier logic.
-/// </summary>
-internal class RoslynInsertExplicitAccessModifierLogic
+namespace CodeMaidShared.Logic.Cleaning
 {
-    #region Fields
-
-    private readonly SemanticModel _semanticModel;
-    private readonly SyntaxGenerator _syntaxGenerator;
-
-    #endregion Fields
-
-    #region Constructors
-
     /// <summary>
-    /// The singleton instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
+    /// A class for encapsulating insertion of explicit access modifier logic.
     /// </summary>
-    //private static RoslynInsertExplicitAccessModifierLogic _instance;
-
-    ///// <summary>
-    ///// Gets an instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
-    ///// </summary>
-    ///// <returns>An instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.</returns>
-    //internal static RoslynInsertExplicitAccessModifierLogic GetInstance(AsyncPackage package)
-    //{
-    //    return new RoslynInsertExplicitAccessModifierLogic(semanticModel, syntaxGenerator);
-    //}
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
-    /// </summary>
-    public RoslynInsertExplicitAccessModifierLogic(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
+    internal class RoslynInsertExplicitAccessModifierLogic
     {
-        _semanticModel = semanticModel;
-        _syntaxGenerator = syntaxGenerator;
-    }
+        #region Fields
 
-    #endregion Constructors
+        private readonly SemanticModel _semanticModel;
+        private readonly SyntaxGenerator _syntaxGenerator;
 
-    public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
-    {
-        var explicitLogic = new RoslynInsertExplicitAccessModifierLogic(model, generator);
-        cleanup.MemberWriter = explicitLogic.ProcessMember;
-        return cleanup;
-    }
+        #endregion Fields
 
-    public SyntaxNode ProcessMember(SyntaxNode original, SyntaxNode newNode)
-    {
-        return newNode switch
+        #region Constructors
+
+        /// <summary>
+        /// The singleton instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
+        /// </summary>
+        //private static RoslynInsertExplicitAccessModifierLogic _instance;
+
+        ///// <summary>
+        ///// Gets an instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
+        ///// </summary>
+        ///// <returns>An instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.</returns>
+        //internal static RoslynInsertExplicitAccessModifierLogic GetInstance(AsyncPackage package)
+        //{
+        //    return new RoslynInsertExplicitAccessModifierLogic(semanticModel, syntaxGenerator);
+        //}
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
+        /// </summary>
+        public RoslynInsertExplicitAccessModifierLogic(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
         {
-            DelegateDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnDelegates => AddAccessibility(original, newNode),
-            EventFieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEvents => AddAccessibility(original, newNode),
-            EnumDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEnumerations => AddAccessibility(original, newNode),
-            FieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnFields => AddAccessibility(original, newNode),
-            InterfaceDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnInterfaces => AddAccessibility(original, newNode),
-
-            PropertyDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnProperties => AddAccessibility(original, newNode),
-            MethodDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnMethods => AddAccessibility(original, newNode),
-
-            ClassDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnClasses => AddAccessibility(original, newNode),
-            StructDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnStructs => AddAccessibility(original, newNode),
-
-            //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecords => AddAccessibility(original, node),
-            //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordStructDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecordStructs => AddAccessibility(original, node),
-
-            _ => newNode,
-        };
-    }
-
-    private SyntaxNode AddAccessibility(SyntaxNode original, SyntaxNode newNode)
-    {
-        if (!CSharpAccessibilityFacts.ShouldUpdateAccessibilityModifier(original as MemberDeclarationSyntax, AccessibilityModifiersRequired.Always, out var _, out var canChange))
-        {
-            return newNode;
+            _semanticModel = semanticModel;
+            _syntaxGenerator = syntaxGenerator;
         }
 
-        var mapped = MapToDeclarator(original);
+        #endregion Constructors
 
-        var symbol = _semanticModel.GetDeclaredSymbol(mapped);
-        if (symbol is null)
+        public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
         {
-            throw new ArgumentNullException(nameof(symbol));
+            var explicitLogic = new RoslynInsertExplicitAccessModifierLogic(model, generator);
+            cleanup.MemberWriter = explicitLogic.ProcessMember;
+            return cleanup;
         }
 
-        var preferredAccessibility = AddAccessibilityModifiersHelpers.GetPreferredAccessibility(symbol);
-
-        if(original is SyntaxToken cl)
+        public SyntaxNode ProcessMember(SyntaxNode original, SyntaxNode newNode)
         {
-            //var f = cl.DescendantNodesAndTokens().First();
-            //var t = f.GetLeadingTrivia();
-            ////var t = cl.GetLeadingTrivia();
+            return newNode switch
+            {
+                DelegateDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnDelegates => AddAccessibility(original, newNode),
+                EventFieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEvents => AddAccessibility(original, newNode),
+                EnumDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEnumerations => AddAccessibility(original, newNode),
+                FieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnFields => AddAccessibility(original, newNode),
+                InterfaceDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnInterfaces => AddAccessibility(original, newNode),
 
-            //var newTrivia = t.Add(SyntaxFactory.EndOfLine(""));
+                PropertyDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnProperties => AddAccessibility(original, newNode),
+                MethodDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnMethods => AddAccessibility(original, newNode),
 
-            //var fir = f.WithLeadingTrivia(newTrivia);
+                ClassDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnClasses => AddAccessibility(original, newNode),
+                StructDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnStructs => AddAccessibility(original, newNode),
 
-            //newNode = newNode.WithLeadingTrivia(newTrivia);
+                //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecords => AddAccessibility(original, node),
+                //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordStructDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecordStructs => AddAccessibility(original, node),
 
-            //var f = cl.DescendantNodesAndTokens().First();
-            //var t = f.GetLeadingTrivia();
-            var t = cl.GetLeadingTrivia();
-
-            var newTrivia = t.Add(SyntaxFactory.EndOfLine("")).Add(SyntaxFactory.EndOfLine("")).Add(SyntaxFactory.EndOfLine(""));
-            newNode = newNode.WithLeadingTrivia(newTrivia);
+                _ => newNode,
+            };
         }
 
-
-        return InternalGenerator.WithAccessibility(newNode, preferredAccessibility);
-        //return _syntaxGenerator.WithAccessibility(newNode, preferredAccessibility);
-    }
-
-    private static SyntaxNode MapToDeclarator(SyntaxNode node)
-    {
-        return node switch
+        private SyntaxNode AddAccessibility(SyntaxNode original, SyntaxNode newNode)
         {
-            FieldDeclarationSyntax field => field.Declaration.Variables[0],
-            EventFieldDeclarationSyntax eventField => eventField.Declaration.Variables[0],
-            _ => node,
-        };
+            if (!CSharpAccessibilityFacts.ShouldUpdateAccessibilityModifier(original as MemberDeclarationSyntax, AccessibilityModifiersRequired.Always, out var _, out var canChange))
+            {
+                return newNode;
+            }
+
+            var mapped = MapToDeclarator(original);
+
+            var symbol = _semanticModel.GetDeclaredSymbol(mapped);
+            if (symbol is null)
+            {
+                throw new ArgumentNullException(nameof(symbol));
+            }
+
+            var preferredAccessibility = AddAccessibilityModifiersHelpers.GetPreferredAccessibility(symbol);
+
+            if (original is ClassDeclarationSyntax cl)
+            {
+                var f = cl.DescendantNodesAndTokens().First();
+                var t = f.GetLeadingTrivia();
+                //var t = cl.GetLeadingTrivia();
+
+                var newTrivia = t.Add(SyntaxFactory.EndOfLine(""));
+
+                var fir = f.WithLeadingTrivia(newTrivia);
+
+                //_syntaxGenerator.With
+                //newNode.With
+                newNode = newNode.WithLeadingTrivia(newTrivia);
+
+                //var f = cl.DescendantNodesAndTokens().First();
+                //var t = f.GetLeadingTrivia();
+                //_syntaxGenerator.Set
+                //var t = cl.GetLeadingTrivia();
+
+                //var newTrivia = t.Add(SyntaxFactory.EndOfLine("")).Add(SyntaxFactory.EndOfLine("")).Add(SyntaxFactory.EndOfLine(""));
+                //newNode = newNode.WithLeadingTrivia(newTrivia);
+            }
+
+
+            return InternalGenerator.WithAccessibility(newNode, preferredAccessibility);
+            //return _syntaxGenerator.WithAccessibility(newNode, preferredAccessibility);
+        }
+
+        private static SyntaxNode MapToDeclarator(SyntaxNode node)
+        {
+            return node switch
+            {
+                FieldDeclarationSyntax field => field.Declaration.Variables[0],
+                EventFieldDeclarationSyntax eventField => eventField.Declaration.Variables[0],
+                _ => node,
+            };
+        }
     }
 }
