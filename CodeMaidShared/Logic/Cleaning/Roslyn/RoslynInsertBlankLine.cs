@@ -1,11 +1,8 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 using SteveCadwallader.CodeMaid.Logic.Cleaning;
 using SteveCadwallader.CodeMaid.Properties;
-using System;
-using System.Linq;
 
 namespace CodeMaidShared.Logic.Cleaning
 {
@@ -51,110 +48,146 @@ namespace CodeMaidShared.Logic.Cleaning
         public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
         {
             var explicitLogic = new RoslynInsertBlankLine(model, generator);
-            //cleanup.MemberWriter = explicitLogic.AddPadding;
+            cleanup.PaddingWriter = explicitLogic.AddPadding;
             return cleanup;
         }
 
-        public static RoslynCleanup Initialize2(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
+        public (SyntaxNode, bool) AddPadding(SyntaxNode original, SyntaxNode newNode, bool previousRequiresPaddingStart, bool isFirst)
         {
-            var explicitLogic = new RoslynInsertBlankLine(model, generator);
-            //cleanup.MemberWriter = explicitLogic.AddPadding;
-            return cleanup;
-        }
+            // Assume that whitespace blank lines are considered valid padding.
+            // Add padding to start
+            // If addPaddingStart
+            //      when no padding at first leading trivia
+            //      when not first node.
+            // Else
+            //      when settings require padding
+            //      when does not contain a new line in any of the trivia
+            //      when not first node
 
-        public (SyntaxNode, bool) AddPadding(SyntaxNode original, SyntaxNode newNode, bool addPaddingStart)
-        {
-            // Add padding to start when addPaddingStart or settings.AddPaddingStart when no padding at start.
             // Return addTrailingPadding when setting.AddPaddingEnd
 
             // If Settings require padding at the end set true
-            // Check if padding is needed -> Exit if already
-            // If addPadding or settings require padding at the start,
 
-            if (!addPaddingStart)
+            // Cannot add padding to end, if padding is needed let the next node add padding.
+            bool requiresPaddingAfter = RequiresPaddingAfter(newNode);
+
+            bool shouldAddPaddingBefore = RequiresPaddingBefore(newNode);
+
+            if (isFirst || StartHasPadding(newNode))
             {
-                addPaddingStart = newNode.Kind() switch
-                {
-                    SyntaxKind.ClassDeclaration when Settings.Default.Cleaning_InsertBlankLinePaddingBeforeClasses => true,
-                    _ => false,
-                };
+                return (newNode, requiresPaddingAfter);
             }
 
-            if (newNode is ClassDeclarationSyntax cl)
-            {
-                var f = cl.DescendantNodesAndTokens().First();
-                var t = f.GetLeadingTrivia();
+            var containsAnyPadding = HasAnyPadding(newNode);
 
-                var containsNewLine = t.Any(x => x == SyntaxFactory.EndOfLine(""));
-                if (!containsNewLine)
-                {
-                    var newTrivia = t.Add(SyntaxFactory.EndOfLine(""));
-                    newNode = newNode.WithLeadingTrivia(newTrivia);
-                }
+            if (previousRequiresPaddingStart || (shouldAddPaddingBefore && containsAnyPadding))
+            {
+                newNode = InternalGenerator.AddPadding(newNode);
             }
 
-            return (newNode, Settings.Default.Cleaning_InsertBlankLinePaddingAfterClasses);
-
-            //return newNode switch
-            //{
-            //    DelegateDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnDelegates => AddAccessibility(original, newNode),
-            //    EventFieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEvents => AddAccessibility(original, newNode),
-            //    EnumDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEnumerations => AddAccessibility(original, newNode),
-            //    FieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnFields => AddAccessibility(original, newNode),
-            //    InterfaceDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnInterfaces => AddAccessibility(original, newNode),
-
-            //    PropertyDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnProperties => AddAccessibility(original, newNode),
-            //    MethodDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnMethods => AddAccessibility(original, newNode),
-
-            //    ClassDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnClasses => AddAccessibility(original, newNode),
-            //    StructDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnStructs => AddAccessibility(original, newNode),
-
-            //    //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecords => AddAccessibility(original, node),
-            //    //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordStructDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecordStructs => AddAccessibility(original, node),
-
-            //    _ => newNode,
-            //};
-
-            return (newNode, false);
+            return (newNode, requiresPaddingAfter);
         }
 
-        private SyntaxNode AddAccessibility(SyntaxNode original, SyntaxNode newNode)
+        private static bool RequiresPaddingBefore(SyntaxNode newNode)
         {
-            if (!CSharpAccessibilityFacts.ShouldUpdateAccessibilityModifier(original as MemberDeclarationSyntax, AccessibilityModifiersRequired.Always, out var _, out var canChange))
+            bool shouldAddPaddingBefore = (newNode.Kind(), Settings.Default) switch
             {
-                return newNode;
-            }
+                (SyntaxKind.UsingStatement, { Cleaning_InsertBlankLinePaddingBeforeUsingStatementBlocks: true }) => true,
+                (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration, { Cleaning_InsertBlankLinePaddingBeforeNamespaces: true }) => true,
+                //(RegionDirectiveTriviaSyntax, { Cleaning_InsertBlankLinePaddingBeforeRegionTags: true}) => true,
+                (SyntaxKind.ClassDeclaration, { Cleaning_InsertBlankLinePaddingBeforeClasses: true }) => true,
+                (SyntaxKind.DelegateDeclaration, { Cleaning_InsertBlankLinePaddingBeforeDelegates: true }) => true,
+                (SyntaxKind.EnumDeclaration, { Cleaning_InsertBlankLinePaddingBeforeEnumerations: true }) => true,
+                (SyntaxKind.EventDeclaration, { Cleaning_InsertBlankLinePaddingBeforeEvents: true }) => true,
+                // TODO: (MultiLineIfBlockSyntax, { Cleaning_InsertBlankLinePaddingBeforeFieldsMultiLine: true}) => true,
+                (SyntaxKind.FieldDeclaration, { Cleaning_InsertBlankLinePaddingBeforeFieldsSingleLine: true }) => true,
+                (SyntaxKind.InterfaceDeclaration, { Cleaning_InsertBlankLinePaddingBeforeInterfaces: true }) => true,
+                (SyntaxKind.MethodDeclaration, { Cleaning_InsertBlankLinePaddingBeforeMethods: true }) => true,
+                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingBeforePropertiesMultiLine: true }) => true,
+                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingBeforePropertiesSingleLine: true }) => true,
+                (SyntaxKind.StructDeclaration, { Cleaning_InsertBlankLinePaddingBeforeStructs: true }) => true,
 
-            var mapped = MapToDeclarator(original);
+                (SyntaxKind.RecordDeclaration, { Cleaning_InsertBlankLinePaddingBeforeStructs: true }) => true,
+                (SyntaxKind.RecordStructDeclaration, { Cleaning_InsertBlankLinePaddingBeforeStructs: true }) => true,
 
-            var symbol = _semanticModel.GetDeclaredSymbol(mapped);
-            if (symbol is null)
-            {
-                throw new ArgumentNullException(nameof(symbol));
-            }
-
-            var preferredAccessibility = AddAccessibilityModifiersHelpers.GetPreferredAccessibility(symbol);
-            return InternalGenerator.WithAccessibility(newNode, preferredAccessibility);
-            //return _syntaxGenerator.WithAccessibility(newNode, preferredAccessibility);
-        }
-
-        private static SyntaxNode MapToDeclarator(SyntaxNode node)
-        {
-            return node switch
-            {
-                FieldDeclarationSyntax field => field.Declaration.Variables[0],
-                EventFieldDeclarationSyntax eventField => eventField.Declaration.Variables[0],
-                _ => node,
+                _ => false,
             };
+            return shouldAddPaddingBefore;
         }
-    }
-    public class MyClass2
-    {
-        public class Inner
+
+        private static bool RequiresPaddingAfter(SyntaxNode newNode)
         {
+            bool shouldAddPaddingAfter = (newNode.Kind(), Settings.Default) switch
+            {
+                (SyntaxKind.UsingStatement, { Cleaning_InsertBlankLinePaddingAfterUsingStatementBlocks: true }) => true,
+                (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration, { Cleaning_InsertBlankLinePaddingAfterNamespaces: true }) => true,
+                //(RegionDirectiveTriviaSyntax, { Cleaning_InsertBlankLinePaddingAfterRegionTags: true}) => true,
+                (SyntaxKind.ClassDeclaration, { Cleaning_InsertBlankLinePaddingAfterClasses: true }) => true,
+                (SyntaxKind.DelegateDeclaration, { Cleaning_InsertBlankLinePaddingAfterDelegates: true }) => true,
+                (SyntaxKind.EnumDeclaration, { Cleaning_InsertBlankLinePaddingAfterEnumerations: true }) => true,
+                (SyntaxKind.EventDeclaration, { Cleaning_InsertBlankLinePaddingAfterEvents: true }) => true,
+                // TODO: (MultiLineIfBlockSyntax, { Cleaning_InsertBlankLinePaddingAfterFieldsMultiLine: true}) => true,
+                (SyntaxKind.FieldDeclaration, { Cleaning_InsertBlankLinePaddingAfterFieldsSingleLine: true }) => true,
+                (SyntaxKind.InterfaceDeclaration, { Cleaning_InsertBlankLinePaddingAfterInterfaces: true }) => true,
+                (SyntaxKind.MethodDeclaration, { Cleaning_InsertBlankLinePaddingAfterMethods: true }) => true,
+                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingAfterPropertiesMultiLine: true }) => true,
+                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingAfterPropertiesSingleLine: true }) => true,
+                (SyntaxKind.StructDeclaration, { Cleaning_InsertBlankLinePaddingAfterStructs: true }) => true,
+
+                (SyntaxKind.RecordDeclaration, { Cleaning_InsertBlankLinePaddingAfterStructs: true }) => true,
+                (SyntaxKind.RecordStructDeclaration, { Cleaning_InsertBlankLinePaddingAfterStructs: true }) => true,
+
+                _ => false,
+            };
+            return shouldAddPaddingAfter;
         }
-        public class Inner2
+
+        private static bool StartHasPadding(SyntaxNode node)
         {
+            foreach (var item in node.GetLeadingTrivia())
+            {
+                var kind = item.Kind();
+                if (kind == SyntaxKind.WhitespaceTrivia)
+                {
+                    continue;
+                }
+                if (kind == SyntaxKind.EndOfLineTrivia)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+
+            return false;
+        }
+
+        // TODO handle XML comments?
+
+        private static bool HasAnyPadding(SyntaxNode node)
+        {
+            var isPadding = true;
+            foreach (var item in node.GetLeadingTrivia())
+            {
+                var kind = item.Kind();
+                if (kind == SyntaxKind.WhitespaceTrivia)
+                {
+                    continue;
+                }
+                if (kind == SyntaxKind.EndOfLineTrivia)
+                {
+                    if (isPadding)
+                    {
+                        return true;
+                    }
+                    isPadding = true;
+                    continue;
+                }
+
+                isPadding = false;
+            }
+
+            return false;
         }
     }
 }

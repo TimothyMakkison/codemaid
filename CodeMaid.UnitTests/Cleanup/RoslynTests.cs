@@ -17,14 +17,14 @@ namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
         public async Task ShouldAddClassAccessorAsync()
         {
             var source =
-    """
+"""
 class MyClass
 {
 }
 """;
 
             var expected =
-    """
+"""
 internal class MyClass
 {
 }
@@ -34,10 +34,38 @@ internal class MyClass
         }
 
         [TestMethod]
+        public async Task ShouldPadClassAccessorAsync()
+        {
+            var source =
+"""
+internal class MyClass
+{
+}
+internal class MyClass2
+{
+}
+""";
+
+            var expected =
+"""
+internal class MyClass
+{
+}
+
+internal class MyClass2
+{
+}
+""";
+
+            await testWorkspace.VerifyCleanupAsync(source, expected);
+        }
+
+
+        [TestMethod]
         public async Task ShouldAddSamePartialClassAccessorsAsync()
         {
             var source =
-    """
+"""
 public partial class Temp
 {
 }
@@ -48,7 +76,7 @@ partial class Temp
 """;
 
             var expected =
-    """
+"""
 public partial class Temp
 {
 }
@@ -65,7 +93,7 @@ public partial class Temp
         public async Task ShouldAddNestedClassAccessorAsync()
         {
             var source =
-    """
+"""
 class Temp
 {
     int MyProperty { get; set; }
@@ -81,7 +109,7 @@ public class Outer
 """;
 
             var expected =
-    """
+"""
 internal class Temp
 {
     private int MyProperty { get; set; }
@@ -102,14 +130,14 @@ public class Outer
         public async Task ShouldAddStructAccessorAsync()
         {
             var source =
-    """
+"""
 struct MyStruct
 {
 }
 """;
 
             var expected =
-    """
+"""
 internal struct MyStruct
 {
 }
@@ -122,7 +150,7 @@ internal struct MyStruct
         public async Task ShouldAddRefStructAccessorAsync()
         {
             var source =
-    """
+"""
 ref struct MyStruct
 {
 }
@@ -133,7 +161,7 @@ readonly ref struct MyReadonlyStruct
 """;
 
             var expected =
-    """
+"""
 internal ref struct MyStruct
 {
 }
@@ -150,7 +178,7 @@ internal readonly ref struct MyReadonlyStruct
         public async Task ShouldAddPropertyAccessorAsync()
         {
             var source =
-    """
+"""
 class Sample
 {
     int Prop { get; set; }
@@ -158,7 +186,7 @@ class Sample
 """;
 
             var expected =
-    """
+"""
 internal class Sample
 {
     private int Prop { get; set; }
@@ -172,7 +200,7 @@ internal class Sample
         public async Task ShouldNotRemoveRequiredPropertyAsync()
         {
             var source =
-    """
+"""
 class Sample
 {
     required int Prop { get; set; }
@@ -180,7 +208,7 @@ class Sample
 """;
 
             var expected =
-    """
+"""
 internal class Sample
 {
     private required int Prop { get; set; }
@@ -194,7 +222,7 @@ internal class Sample
         public async Task ShouldAddMethodsAccessorAsync()
         {
             var source =
-    """
+"""
 class ExampleClass
 {
     void Do()
@@ -204,7 +232,7 @@ class ExampleClass
 """;
 
             var expected =
-    """
+"""
 internal class ExampleClass
 {
     private void Do()
@@ -220,7 +248,7 @@ internal class ExampleClass
         public async Task ShouldNotAddPartialMethodAccessorAsync()
         {
             var source =
-    """
+"""
 public partial class ExampleClass
 {
     partial void Do()
@@ -230,7 +258,7 @@ public partial class ExampleClass
 """;
 
             var expected =
-    """
+"""
 public partial class ExampleClass
 {
     partial void Do()
@@ -246,7 +274,7 @@ public partial class ExampleClass
         public async Task ShouldAddDefaultAbstractVirtualAccessorsAsync()
         {
             var source =
-    """
+"""
 abstract class MyAbstract
 {
     virtual void VirtualMethod()
@@ -258,7 +286,7 @@ abstract class MyAbstract
 """;
 
             var expected =
-    """
+"""
 internal abstract class MyAbstract
 {
     public virtual void VirtualMethod()
@@ -275,7 +303,7 @@ internal abstract class MyAbstract
         public async Task TestInheritsAbstractAsync()
         {
             var source =
-    """
+"""
 abstract class MyAbstract
 {
     private protected abstract void AbstractMethod();
@@ -290,7 +318,7 @@ class Derive : MyAbstract
 """;
 
             var expected =
-    """
+"""
 internal abstract class MyAbstract
 {
     private protected abstract void AbstractMethod();
@@ -310,7 +338,7 @@ internal class Derive : MyAbstract
         public async Task TestShouldNotRemoveFileAsync()
         {
             var source =
-    """
+"""
 file class MyFile
 {
     int Prop { get; set; }
@@ -323,7 +351,7 @@ file struct MyFileStruct
 """;
 
             var expected =
-    """
+"""
 file class MyFile
 {
     private int Prop { get; set; }
@@ -341,7 +369,7 @@ file struct MyFileStruct
         public async Task ShouldAddDelegateAccessorAsync()
         {
             var source =
-    """
+"""
 class MyDelegate
 {
     delegate int PerformCalculation(int x, int y);
@@ -349,7 +377,7 @@ class MyDelegate
 """;
 
             var expected =
-    """
+"""
 internal class MyDelegate
 {
     private delegate int PerformCalculation(int x, int y);
@@ -362,7 +390,7 @@ internal class MyDelegate
         public async Task ShouldAddEventAccessorAsync()
         {
             var source =
-    """
+"""
 class MyEvent
 {
     event MyEventHandler MyEvent;
@@ -370,7 +398,7 @@ class MyEvent
 """;
 
             var expected =
-    """
+"""
 internal class MyEvent
 {
     private event MyEventHandler MyEvent;
@@ -383,7 +411,7 @@ internal class MyEvent
         public async Task ShouldAddEnumAccessorAsync()
         {
             var source =
-    """
+"""
 enum MyEnum
 {
     Some = 0,
@@ -392,7 +420,7 @@ enum MyEnum
 """;
 
             var expected =
-    """
+"""
 internal enum MyEnum
 {
     Some = 0,
@@ -406,7 +434,7 @@ internal enum MyEnum
         public async Task ShouldAddNestedEnumAccessorAsync()
         {
             var source =
-    """
+"""
 class MyClass
 {
     enum MyEnum
@@ -418,7 +446,7 @@ class MyClass
 """;
 
             var expected =
-    """
+"""
 internal class MyClass
 {
     private enum MyEnum
@@ -435,7 +463,7 @@ internal class MyClass
         public async Task ShouldAddInterfaceAccessorAsync()
         {
             var source =
-    """
+"""
 interface IMyInterface
 {
     int MyProp { get; set; }
@@ -445,7 +473,7 @@ interface IMyInterface
 """;
 
             var expected =
-    """
+"""
 internal interface IMyInterface
 {
     int MyProp { get; set; }
@@ -460,7 +488,7 @@ internal interface IMyInterface
         public async Task ShouldAddNestedInterfaceAccessorAsync()
         {
             var source =
-    """
+"""
 class MyClass
 {
     interface IMyInterface
@@ -473,7 +501,7 @@ class MyClass
 """;
 
             var expected =
-    """
+"""
 internal class MyClass
 {
     private interface IMyInterface
@@ -491,7 +519,7 @@ internal class MyClass
         public async Task ShouldAddFieldAccessorAsync()
         {
             var source =
-    """
+"""
 class MyClass
 {
     int _number;
@@ -499,7 +527,7 @@ class MyClass
 """;
 
             var expected =
-    """
+"""
 internal class MyClass
 {
     private int _number;
@@ -512,7 +540,7 @@ internal class MyClass
         public async Task ShouldNotChangeInvalidSyntaxAsync()
         {
             var source =
-    """
+"""
 class ITemp
 {
     void Do()
@@ -523,7 +551,7 @@ class ITemp
 """;
 
             var expected =
-    """
+"""
 internal class ITemp
 {
     private void Do()
@@ -539,7 +567,7 @@ internal class ITemp
         public async Task ShouldNotChangeInterfaceDescendantsAsync()
         {
             var source =
-    """
+"""
 interface IInterface
 {
     class C
@@ -553,7 +581,7 @@ interface IInterface
 """;
 
             var expected =
-    """
+"""
 internal interface IInterface
 {
     class C

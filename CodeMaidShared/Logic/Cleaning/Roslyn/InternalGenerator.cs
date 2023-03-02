@@ -48,6 +48,16 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
             });
         }
 
+        public static SyntaxNode AddPadding(SyntaxNode declaration)
+        {
+            var originalTrivia = declaration.GetLeadingTrivia();
+            var newTrivia = originalTrivia.Insert(0, SyntaxFactory.EndOfLine(Environment.NewLine));
+
+            var newNode = declaration.WithLeadingTrivia(newTrivia);
+
+            return newNode;
+        }
+
         private static SyntaxNode SetModifierTokens(SyntaxNode declaration, SyntaxTokenList modifiers)
                => declaration switch
                {

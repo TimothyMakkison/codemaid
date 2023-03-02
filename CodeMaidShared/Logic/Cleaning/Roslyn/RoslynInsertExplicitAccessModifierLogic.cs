@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.Editing;
 using SteveCadwallader.CodeMaid.Logic.Cleaning;
 using SteveCadwallader.CodeMaid.Properties;
 using System;
-using System.Linq;
 
 namespace CodeMaidShared.Logic.Cleaning
 {
@@ -94,31 +93,6 @@ namespace CodeMaidShared.Logic.Cleaning
             }
 
             var preferredAccessibility = AddAccessibilityModifiersHelpers.GetPreferredAccessibility(symbol);
-
-            if (original is ClassDeclarationSyntax cl)
-            {
-                var f = cl.DescendantNodesAndTokens().First();
-                var t = f.GetLeadingTrivia();
-                //var t = cl.GetLeadingTrivia();
-
-                var newTrivia = t.Add(SyntaxFactory.EndOfLine(""));
-
-                var fir = f.WithLeadingTrivia(newTrivia);
-
-                //_syntaxGenerator.With
-                //newNode.With
-                newNode = newNode.WithLeadingTrivia(newTrivia);
-
-                //var f = cl.DescendantNodesAndTokens().First();
-                //var t = f.GetLeadingTrivia();
-                //_syntaxGenerator.Set
-                //var t = cl.GetLeadingTrivia();
-
-                //var newTrivia = t.Add(SyntaxFactory.EndOfLine("")).Add(SyntaxFactory.EndOfLine("")).Add(SyntaxFactory.EndOfLine(""));
-                //newNode = newNode.WithLeadingTrivia(newTrivia);
-            }
-
-
             return InternalGenerator.WithAccessibility(newNode, preferredAccessibility);
             //return _syntaxGenerator.WithAccessibility(newNode, preferredAccessibility);
         }

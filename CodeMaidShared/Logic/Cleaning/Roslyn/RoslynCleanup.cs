@@ -9,6 +9,7 @@ namespace CodeMaidShared.Logic.Cleaning
     internal class RoslynCleanup : CSharpSyntaxRewriter
     {
         public Func<SyntaxNode, SyntaxNode, SyntaxNode> MemberWriter { get; set; }
+        public Func<SyntaxNode, SyntaxNode, bool, bool, (SyntaxNode, bool)> PaddingWriter { get; set; }
 
         // Use this messy functions to ensure that the current node is not a descendant of an interface.
         // This is to mimic the recursive CSharpAddAccessibilityModifiersDiagnosticAnalyzer.ProcessMemberDeclaration
@@ -18,23 +19,35 @@ namespace CodeMaidShared.Logic.Cleaning
 
         private bool InsideInterface { get; set; }
         private bool ShouldAddPadding { get; set; }
+        private bool IsFirst { get; set; }
 
         public RoslynCleanup()
         {
             MemberWriter = (_, x) => x;
+            PaddingWriter = (_, x, _, _) => (x, false);
             InsideInterface = false;
+            ShouldAddPadding = false;
+            IsFirst = true;
         }
 
         public override SyntaxNode Visit(SyntaxNode node)
         {
+            if (node == null)
+            {
+                return node;
+            }
+
             var inInterface = InsideInterface;
             var shouldAddPadding = ShouldAddPadding;
+            var isFirst = IsFirst;
 
             if (node.IsKind(SyntaxKind.InterfaceDeclaration))
                 InsideInterface = true;
 
             // Might have to account for namespaces here.
             ShouldAddPadding = false;
+            IsFirst = true;
+
             var newNode = base.Visit(node);
 
             if (inInterface == false)
@@ -42,11 +55,10 @@ namespace CodeMaidShared.Logic.Cleaning
                 newNode = MemberWriter(node, newNode);
             }
 
+            (newNode, ShouldAddPadding) =  PaddingWriter(node, newNode, shouldAddPadding, isFirst);
 
-
-            //ShouldAddPadding = shouldAddPadding;
             InsideInterface = inInterface;
-
+            IsFirst = false;
             return newNode;
         }
 
@@ -75,9 +87,11 @@ namespace CodeMaidShared.Logic.Cleaning
 
             var cleaner = new RoslynCleanup();
             RoslynInsertExplicitAccessModifierLogic.Initialize(cleaner, semanticModel, syntaxGenerator);
-            cleaner.Process(root, Global.Workspace);
+            RoslynInsertBlankLine.Initialize(cleaner, semanticModel, syntaxGenerator);
 
-            document = document.WithSyntaxRoot(root);
+            var newRoot = cleaner.Process(root, Global.Workspace);
+
+            document = document.WithSyntaxRoot(newRoot);
             Global.Workspace.TryApplyChanges(document.Project.Solution);
         }
     }
@@ -87,8 +101,5 @@ namespace CodeMaidShared.Logic.Cleaning
         //public SyntaxNode Process(SyntaxNode original, SyntaxNode newNode)
         //{
         //}
-    }
-    class MyClass
-    {
     }
 }
