@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
 {
     [TestClass]
-    public class RoslynTests
+    public class InsertModifiersTests
     {
         private readonly TestWorkspace testWorkspace;
 
-        public RoslynTests()
+        public InsertModifiersTests()
         {
             testWorkspace = new TestWorkspace();
         }

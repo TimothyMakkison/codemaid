@@ -75,7 +75,7 @@ namespace CodeMaidShared.Logic.Cleaning
 
             Global.Package = package;
 
-            var document = Global.GetActiveDocument();
+            var document = Global.GetActiveDocument(package);
 
             if (document == null || !document.TryGetSyntaxRoot(out SyntaxNode root))
             {
@@ -89,10 +89,10 @@ namespace CodeMaidShared.Logic.Cleaning
             RoslynInsertExplicitAccessModifierLogic.Initialize(cleaner, semanticModel, syntaxGenerator);
             RoslynInsertBlankLine.Initialize(cleaner, semanticModel, syntaxGenerator);
 
-            var newRoot = cleaner.Process(root, Global.Workspace);
+            var newRoot = cleaner.Process(root, Global.GetWorkspace(package));
 
             document = document.WithSyntaxRoot(newRoot);
-            Global.Workspace.TryApplyChanges(document.Project.Solution);
+            Global.GetWorkspace(package).TryApplyChanges(document.Project.Solution);
         }
     }
 
