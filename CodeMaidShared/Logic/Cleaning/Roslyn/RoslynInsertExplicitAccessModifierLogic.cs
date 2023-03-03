@@ -23,20 +23,6 @@ namespace CodeMaidShared.Logic.Cleaning
         #region Constructors
 
         /// <summary>
-        /// The singleton instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
-        /// </summary>
-        //private static RoslynInsertExplicitAccessModifierLogic _instance;
-
-        ///// <summary>
-        ///// Gets an instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
-        ///// </summary>
-        ///// <returns>An instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.</returns>
-        //internal static RoslynInsertExplicitAccessModifierLogic GetInstance(AsyncPackage package)
-        //{
-        //    return new RoslynInsertExplicitAccessModifierLogic(semanticModel, syntaxGenerator);
-        //}
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
         /// </summary>
         public RoslynInsertExplicitAccessModifierLogic(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
@@ -49,8 +35,8 @@ namespace CodeMaidShared.Logic.Cleaning
 
         public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
         {
-            var explicitLogic = new RoslynInsertExplicitAccessModifierLogic(model, generator);
-            cleanup.MemberWriter = explicitLogic.ProcessMember;
+            cleanup.AddMiddleware(new AddAccessorCleanupMiddleware(model, generator));
+
             return cleanup;
         }
 

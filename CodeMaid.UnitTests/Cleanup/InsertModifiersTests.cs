@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SteveCadwallader.CodeMaid.Properties;
 using System.Threading.Tasks;
 
 namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup

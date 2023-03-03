@@ -19,7 +19,7 @@ namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
 
             var rewriter = new RoslynCleanup();
             RoslynInsertExplicitAccessModifierLogic.Initialize(rewriter, semanticModel, syntaxGenerator);
-            RoslynInsertBlankLine.Initialize(rewriter, semanticModel, syntaxGenerator);
+            RoslynInsertBlankLine.Initialize(rewriter);
 
             var result = rewriter.Process(syntaxTree, Workspace);
 

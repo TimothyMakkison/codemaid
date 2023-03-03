@@ -11,44 +11,20 @@ namespace CodeMaidShared.Logic.Cleaning
     /// </summary>
     internal class RoslynInsertBlankLine
     {
-        #region Fields
-
-        private readonly SemanticModel _semanticModel;
-        private readonly SyntaxGenerator _syntaxGenerator;
-
-        #endregion Fields
-
         #region Constructors
-
-        /// <summary>
-        /// The singleton instance of the <see cref="RoslynInsertBlankLine" /> class.
-        /// </summary>
-        //private static RoslynInsertBlankLine _instance;
-
-        ///// <summary>
-        ///// Gets an instance of the <see cref="RoslynInsertBlankLine" /> class.
-        ///// </summary>
-        ///// <returns>An instance of the <see cref="RoslynInsertBlankLine" /> class.</returns>
-        //internal static RoslynInsertBlankLine GetInstance(AsyncPackage package)
-        //{
-        //    return new RoslynInsertBlankLine(semanticModel, syntaxGenerator);
-        //}
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RoslynInsertBlankLine" /> class.
         /// </summary>
-        public RoslynInsertBlankLine(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
+        public RoslynInsertBlankLine()
         {
-            _semanticModel = semanticModel;
-            _syntaxGenerator = syntaxGenerator;
         }
 
         #endregion Constructors
 
-        public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
+        public static RoslynCleanup Initialize(RoslynCleanup cleanup)
         {
-            var explicitLogic = new RoslynInsertBlankLine(model, generator);
-            cleanup.PaddingWriter = explicitLogic.AddPadding;
+            cleanup.AddMiddleware(new InsertPaddingCleanupMiddleware());
             return cleanup;
         }
 
@@ -82,7 +58,7 @@ namespace CodeMaidShared.Logic.Cleaning
 
             if (previousRequiresPaddingStart || (shouldAddPaddingBefore && containsAnyPadding))
             {
-                newNode = InternalGenerator.AddPadding(newNode);
+                newNode = InternalGenerator.AddBlankLineToStart(newNode);
             }
 
             return (newNode, requiresPaddingAfter);
