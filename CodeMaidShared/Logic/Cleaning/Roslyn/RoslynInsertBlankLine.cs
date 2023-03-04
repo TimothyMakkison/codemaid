@@ -1,6 +1,5 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Editing;
 using SteveCadwallader.CodeMaid.Logic.Cleaning;
 using SteveCadwallader.CodeMaid.Properties;
 
@@ -75,12 +74,16 @@ namespace CodeMaidShared.Logic.Cleaning
                 (SyntaxKind.DelegateDeclaration, { Cleaning_InsertBlankLinePaddingBeforeDelegates: true }) => true,
                 (SyntaxKind.EnumDeclaration, { Cleaning_InsertBlankLinePaddingBeforeEnumerations: true }) => true,
                 (SyntaxKind.EventDeclaration, { Cleaning_InsertBlankLinePaddingBeforeEvents: true }) => true,
-                // TODO: (MultiLineIfBlockSyntax, { Cleaning_InsertBlankLinePaddingBeforeFieldsMultiLine: true}) => true,
-                (SyntaxKind.FieldDeclaration, { Cleaning_InsertBlankLinePaddingBeforeFieldsSingleLine: true }) => true,
+
+                (SyntaxKind.FieldDeclaration, { Cleaning_InsertBlankLinePaddingBeforeFieldsMultiLine: true }) when newNode.SpansMultipleLines() => true,
+                (SyntaxKind.FieldDeclaration, { Cleaning_InsertBlankLinePaddingBeforeFieldsSingleLine: true }) when newNode.SpansMultipleLines() == false => true,
+
                 (SyntaxKind.InterfaceDeclaration, { Cleaning_InsertBlankLinePaddingBeforeInterfaces: true }) => true,
                 (SyntaxKind.MethodDeclaration, { Cleaning_InsertBlankLinePaddingBeforeMethods: true }) => true,
-                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingBeforePropertiesMultiLine: true }) => true,
-                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingBeforePropertiesSingleLine: true }) => true,
+
+                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingBeforePropertiesMultiLine: true }) when newNode.SpansMultipleLines() => true,
+                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingBeforePropertiesSingleLine: true }) when newNode.SpansMultipleLines() == false => true,
+
                 (SyntaxKind.StructDeclaration, { Cleaning_InsertBlankLinePaddingBeforeStructs: true }) => true,
 
                 (SyntaxKind.RecordDeclaration, { Cleaning_InsertBlankLinePaddingBeforeStructs: true }) => true,
@@ -102,12 +105,16 @@ namespace CodeMaidShared.Logic.Cleaning
                 (SyntaxKind.DelegateDeclaration, { Cleaning_InsertBlankLinePaddingAfterDelegates: true }) => true,
                 (SyntaxKind.EnumDeclaration, { Cleaning_InsertBlankLinePaddingAfterEnumerations: true }) => true,
                 (SyntaxKind.EventDeclaration, { Cleaning_InsertBlankLinePaddingAfterEvents: true }) => true,
-                // TODO: (MultiLineIfBlockSyntax, { Cleaning_InsertBlankLinePaddingAfterFieldsMultiLine: true}) => true,
-                (SyntaxKind.FieldDeclaration, { Cleaning_InsertBlankLinePaddingAfterFieldsSingleLine: true }) => true,
+
+                (SyntaxKind.FieldDeclaration, { Cleaning_InsertBlankLinePaddingAfterFieldsSingleLine: true }) when newNode.SpansMultipleLines() => true,
+                (SyntaxKind.FieldDeclaration, { Cleaning_InsertBlankLinePaddingAfterFieldsSingleLine: true }) when newNode.SpansMultipleLines() == false => true,
+
                 (SyntaxKind.InterfaceDeclaration, { Cleaning_InsertBlankLinePaddingAfterInterfaces: true }) => true,
                 (SyntaxKind.MethodDeclaration, { Cleaning_InsertBlankLinePaddingAfterMethods: true }) => true,
-                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingAfterPropertiesMultiLine: true }) => true,
-                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingAfterPropertiesSingleLine: true }) => true,
+
+                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingAfterPropertiesMultiLine: true }) when newNode.SpansMultipleLines() => true,
+                (SyntaxKind.PropertyDeclaration, { Cleaning_InsertBlankLinePaddingAfterPropertiesSingleLine: true }) when newNode.SpansMultipleLines() == false => true,
+
                 (SyntaxKind.StructDeclaration, { Cleaning_InsertBlankLinePaddingAfterStructs: true }) => true,
 
                 (SyntaxKind.RecordDeclaration, { Cleaning_InsertBlankLinePaddingAfterStructs: true }) => true,

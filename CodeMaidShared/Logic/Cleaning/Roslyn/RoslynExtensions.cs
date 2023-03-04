@@ -9,6 +9,14 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
 {
     internal static class RoslynExtensions
     {
+        public static bool SpansMultipleLines(this SyntaxNode node)
+        {
+            var startLine = node.SyntaxTree.GetLineSpan(node.Span).StartLinePosition.Line;
+            var endLine = node.SyntaxTree.GetLineSpan(node.Span).EndLinePosition.Line;
+
+            return startLine != endLine;
+        }
+
         public static async ValueTask<SemanticModel> GetRequiredSemanticModelAsync(this Document document, CancellationToken cancellationToken)
         {
             if (document.TryGetSemanticModel(out var semanticModel))

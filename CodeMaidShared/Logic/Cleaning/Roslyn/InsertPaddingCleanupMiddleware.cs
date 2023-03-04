@@ -1,5 +1,4 @@
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Editing;
 using System;
 
 namespace CodeMaidShared.Logic.Cleaning
