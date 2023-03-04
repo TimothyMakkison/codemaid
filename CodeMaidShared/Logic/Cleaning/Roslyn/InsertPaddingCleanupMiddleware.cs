@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 
 namespace CodeMaidShared.Logic.Cleaning
@@ -27,7 +28,8 @@ namespace CodeMaidShared.Logic.Cleaning
 
             (newNode, ShouldAddPadding) =  _insertBlankLine.AddPadding(original, newNode, shouldAddPadding, isFirst);
 
-            IsFirstNode = false;
+            // Have to ignore inheritance/type/attribute nodes until the first member node.
+            IsFirstNode = isFirst ? newNode is TypeParameterListSyntax or AttributeArgumentListSyntax or BaseListSyntax or TypeParameterConstraintClauseSyntax : false;
             return newNode;
         }
 

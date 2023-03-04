@@ -55,7 +55,7 @@ namespace CodeMaidShared.Logic.Cleaning
 
             var containsAnyPadding = HasAnyPadding(newNode);
 
-            if (previousRequiresPaddingStart || (shouldAddPaddingBefore && containsAnyPadding))
+            if (previousRequiresPaddingStart || (shouldAddPaddingBefore && !containsAnyPadding))
             {
                 newNode = InternalGenerator.AddBlankLineToStart(newNode);
             }
@@ -70,6 +70,7 @@ namespace CodeMaidShared.Logic.Cleaning
                 (SyntaxKind.UsingStatement, { Cleaning_InsertBlankLinePaddingBeforeUsingStatementBlocks: true }) => true,
                 (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration, { Cleaning_InsertBlankLinePaddingBeforeNamespaces: true }) => true,
                 //(RegionDirectiveTriviaSyntax, { Cleaning_InsertBlankLinePaddingBeforeRegionTags: true}) => true,
+                (SyntaxKind.DefaultSwitchLabel or SyntaxKind.CaseSwitchLabel, { Cleaning_InsertBlankLinePaddingBeforeCaseStatements: true }) => true,
                 (SyntaxKind.ClassDeclaration, { Cleaning_InsertBlankLinePaddingBeforeClasses: true }) => true,
                 (SyntaxKind.DelegateDeclaration, { Cleaning_InsertBlankLinePaddingBeforeDelegates: true }) => true,
                 (SyntaxKind.EnumDeclaration, { Cleaning_InsertBlankLinePaddingBeforeEnumerations: true }) => true,
