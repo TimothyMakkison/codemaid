@@ -45,7 +45,6 @@ namespace CodeMaidShared.Logic.Cleaning
 
             // Cannot add padding to end, if padding is needed let the next node add padding.
             bool requiresPaddingAfter = RequiresPaddingAfter(newNode);
-
             bool shouldAddPaddingBefore = RequiresPaddingBefore(newNode);
 
             if (isFirst || StartHasPadding(newNode))
@@ -67,6 +66,9 @@ namespace CodeMaidShared.Logic.Cleaning
         {
             bool shouldAddPaddingBefore = (newNode.Kind(), Settings.Default) switch
             {
+                // Pad multiline accessors, assume that other nodes cannot be inside an accessor list.
+                (SyntaxKind.GetAccessorDeclaration or SyntaxKind.SetAccessorDeclaration or SyntaxKind.InitAccessorDeclaration, { Cleaning_InsertBlankLinePaddingBetweenPropertiesMultiLineAccessors: true }) when newNode.SpansMultipleLines() => true,
+
                 (SyntaxKind.UsingStatement, { Cleaning_InsertBlankLinePaddingBeforeUsingStatementBlocks: true }) => true,
                 (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration, { Cleaning_InsertBlankLinePaddingBeforeNamespaces: true }) => true,
                 //(RegionDirectiveTriviaSyntax, { Cleaning_InsertBlankLinePaddingBeforeRegionTags: true}) => true,
@@ -99,6 +101,9 @@ namespace CodeMaidShared.Logic.Cleaning
         {
             bool shouldAddPaddingAfter = (newNode.Kind(), Settings.Default) switch
             {
+                // Pad multiline accessors, assume that other nodes cannot be inside an accessor list.
+                (SyntaxKind.GetAccessorDeclaration or SyntaxKind.SetAccessorDeclaration or SyntaxKind.InitAccessorDeclaration, { Cleaning_InsertBlankLinePaddingBetweenPropertiesMultiLineAccessors: true }) when newNode.SpansMultipleLines() => true,
+
                 (SyntaxKind.UsingStatement, { Cleaning_InsertBlankLinePaddingAfterUsingStatementBlocks: true }) => true,
                 (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration, { Cleaning_InsertBlankLinePaddingAfterNamespaces: true }) => true,
                 //(RegionDirectiveTriviaSyntax, { Cleaning_InsertBlankLinePaddingAfterRegionTags: true}) => true,

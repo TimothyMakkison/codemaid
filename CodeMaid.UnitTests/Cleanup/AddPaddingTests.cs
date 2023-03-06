@@ -1,4 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SteveCadwallader.CodeMaid.Properties;
+using System;
 using System.Threading.Tasks;
 
 namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
@@ -170,6 +172,76 @@ public class Class
                 Console.WriteLine(""The number is not zero, one, or two"");
                 break;
         }
+    }
+}
+";
+
+            await testWorkspace.VerifyCleanupAsync(source, expected);
+        }
+
+        [TestMethod]
+        public async Task ShouldPadTypeAsync()
+        {
+            var source =
+@"
+class Class<T> where T : struct
+{
+}
+";
+
+            var expected =
+@"
+internal class Class<T> where T : struct
+{
+}
+";
+
+            await testWorkspace.VerifyCleanupAsync(source, expected);
+        }
+
+        [TestMethod]
+        public async Task ShouldBetweenMultLineAccessorAsync()
+        {
+            var s = Settings.Default;
+            var source =
+@"
+class Class
+{
+    public string FullName
+    {
+        get
+        {
+            return _fullName;
+        }
+        set => _fullName = value;
+    }
+
+    public string FirstName
+    {
+        get => _firstName;
+        set => _firstName = value;
+    }
+}
+";
+
+            var expected =
+@"
+internal class Class
+{
+    public string FullName
+    {
+        get
+        {
+            return _fullName;
+        }
+
+        set => _fullName = value;
+    }
+
+    public string FirstName
+    {
+        get => _firstName;
+        set => _firstName = value;
     }
 }
 ";

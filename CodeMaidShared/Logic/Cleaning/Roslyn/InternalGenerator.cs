@@ -21,6 +21,7 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
 
             return Isolate(declaration, d =>
             {
+                var a = d as TypeDeclarationSyntax;
                 var tokens = CSharpAccessibilityFacts.GetModifierTokens(d);
                 CSharpAccessibilityFacts.GetAccessibilityAndModifiers(tokens, out _, out var modifiers, out _);
                 if (modifiers.IsFile && accessibility != Accessibility.NotApplicable)
