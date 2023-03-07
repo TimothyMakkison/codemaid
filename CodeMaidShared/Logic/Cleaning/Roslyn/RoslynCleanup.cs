@@ -4,6 +4,8 @@ using Microsoft.CodeAnalysis.Editing;
 using Microsoft.VisualStudio.Shell;
 using SteveCadwallader.CodeMaid.Logic.Cleaning;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CodeMaidShared.Logic.Cleaning
 {
@@ -29,7 +31,96 @@ namespace CodeMaidShared.Logic.Cleaning
         {
             var rewrite = Visit(root);
             return rewrite;
+
             //return Formatter.Format(rewrite, SyntaxAnnotation.ElasticAnnotation, workspace);
+        }
+
+        public bool BeforeIsOpen { get; set; } = false;
+        public override SyntaxToken VisitToken(SyntaxToken token)
+        {
+            var beforeIsOpenToken = BeforeIsOpen;
+
+            if (token.IsKind(SyntaxKind.OpenBraceToken))
+            {
+                BeforeIsOpen = true;
+                return base.VisitToken(token);
+            }
+
+            BeforeIsOpen = false;
+            var newToken = base.VisitToken(token);
+
+            if (beforeIsOpenToken)
+                return newToken;
+
+            // Read trivia:
+            // Assume that leading trivia must start on a new line.
+            // Valid line is a single line with white space and endofline, preceeded by a non blank line.
+            // Also check that
+
+            newToken = TryPadComments(newToken);
+
+            BeforeIsOpen = false;
+            return newToken;
+        }
+
+        private static SyntaxToken TryPadRegion(SyntaxToken newToken)
+        {
+            var trivia = newToken.LeadingTrivia.ToArray();
+
+            var prior = LineType.NonBlank;
+            var position = 0;
+
+            var list = new List<int>();
+
+            var read = RoslynExtensions.ReadTrivia2(trivia);
+
+            if (list.Count > 0)
+            {
+                var newTrivia = newToken.LeadingTrivia.ToList();
+                for (int i = list.Count - 1; i >=0; i--)
+                {
+                    newTrivia.Insert(list[i], SyntaxFactory.EndOfLine(Environment.NewLine));
+                }
+
+                newToken = newToken.WithLeadingTrivia(newTrivia);
+            }
+
+            return newToken;
+        }
+
+        private static SyntaxToken TryPadComments(SyntaxToken newToken)
+        {
+            var trivia = newToken.LeadingTrivia.ToArray();
+
+            var prior = LineType.NonBlank;
+            var position = 0;
+
+            var list = new List<int>();
+
+            while (position < trivia.Length)
+            {
+                var (newPos, current) = RoslynExtensions.ReadTrivia(trivia, position);
+                if (current == LineType.SingleComment && prior == LineType.NonBlank)
+                {
+                    list.Add(position);
+                }
+
+                prior = current;
+                position = newPos + 1;
+            }
+
+            if (list.Count > 0)
+            {
+                var newTrivia = newToken.LeadingTrivia.ToList();
+                for (int i = list.Count - 1; i >=0; i--)
+                {
+                    newTrivia.Insert(list[i], SyntaxFactory.EndOfLine(Environment.NewLine));
+                }
+
+                newToken = newToken.WithLeadingTrivia(newTrivia);
+            }
+
+            return newToken;
         }
 
         public static void BuildAndrun(AsyncPackage package)

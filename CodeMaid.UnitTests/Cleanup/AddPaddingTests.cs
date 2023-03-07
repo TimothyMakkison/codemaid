@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SteveCadwallader.CodeMaid.Properties;
-using System;
 using System.Threading.Tasks;
 
 namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
@@ -47,15 +46,10 @@ internal class MyClass2
         {
             var source =
 @"
-internal
-    //
-    class Temp
+internal class Temp
 {
     public int MyProperty { get; set; }
     private void Do()
-    {
-    }
-    private void Foo()
     {
     }
 }
@@ -63,22 +57,15 @@ internal
 
             var expected =
 @"
-internal
-    //
-    class Temp
+internal class Temp
 {
     public int MyProperty { get; set; }
 
     private void Do()
     {
     }
-
-    private void Foo()
-    {
-    }
 }
 ";
-
             await testWorkspace.VerifyCleanupAsync(source, expected);
         }
 
@@ -248,5 +235,45 @@ internal class Class
 
             await testWorkspace.VerifyCleanupAsync(source, expected);
         }
+
+        [TestMethod]
+        public async Task ShouldPadCommentsAsync()
+        {
+            var source =
+@"
+internal
+    //
+    class Temp
+{
+    private void Do()
+    {
+    }
+    // Single
+    private void Foo()
+    {
+    }
+}
+";
+
+            var expected =
+@"
+internal
+
+    //
+    class Temp
+{
+    private void Do()
+    {
+    }
+
+    // Single
+    private void Foo()
+    {
+    }
+}
+";
+            await testWorkspace.VerifyCleanupAsync(source, expected);
+        }
+
     }
 }

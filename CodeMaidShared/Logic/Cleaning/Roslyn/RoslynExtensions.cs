@@ -2,13 +2,128 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace SteveCadwallader.CodeMaid.Logic.Cleaning
 {
+    public enum LineType
+    {
+        Blank, SingleComment, NonBlank
+    }
+
     internal static class RoslynExtensions
     {
+        public static (int, LineType) ReadTrivia(SyntaxTrivia[] trivia, int start)
+        {
+            var lineType = LineType.Blank;
+
+            for (int i = start; i < trivia.Length; i++)
+            {
+                var value = trivia[i];
+                if (value.IsKind(SyntaxKind.EndOfLineTrivia))
+                {
+                    return (i, lineType);
+                }
+                else if (value.IsKind(SyntaxKind.WhitespaceTrivia))
+                {
+                    continue;
+                }
+                else if (value.Kind() is SyntaxKind.SingleLineCommentTrivia or SyntaxKind.SingleLineDocumentationCommentTrivia)
+                {
+                    if (lineType == LineType.Blank)
+                    {
+                        lineType = LineType.SingleComment;
+                    }
+                    continue;
+                }
+                else
+                {
+                    lineType = LineType.NonBlank;
+                }
+            }
+
+            if (lineType == LineType.SingleComment)
+            {
+                return (trivia.Length, LineType.NonBlank);
+            }
+            return (trivia.Length, lineType);
+        }
+
+        public static List<(SyntaxKind, int)> ReadTrivia2(SyntaxTrivia[] trivia)
+        {
+            var output = new List<(SyntaxKind, int)>();
+            var lineType = SyntaxKind.WhitespaceTrivia;
+
+            for (int i = 0; i < trivia.Length; i++)
+            {
+                var value = trivia[i];
+                if (value.IsKind(SyntaxKind.EndOfLineTrivia))
+                {
+                    output.Add((lineType, i));
+                    lineType = SyntaxKind.WhitespaceTrivia;
+                }
+                else if (value.IsKind(SyntaxKind.WhitespaceTrivia))
+                {
+                }
+                else if (value.Kind() is SyntaxKind.SingleLineCommentTrivia or SyntaxKind.SingleLineDocumentationCommentTrivia or SyntaxKind.RegionDirectiveTrivia or SyntaxKind.EndRegionDirectiveTrivia)
+                {
+                    if (lineType == SyntaxKind.WhitespaceTrivia)
+                    {
+                        lineType = value.Kind();
+                    }
+                }
+                else
+                {
+                    lineType = SyntaxKind.BadDirectiveTrivia;
+                }
+            }
+
+            //if (lineType == LineType.SingleComment)
+            //{
+            //    return (trivia.Length, LineType.NonBlank);
+            //}
+            //return (trivia.Length, lineType);
+            return output;
+        }
+
+        public static (int, LineType) ReadRegion(SyntaxTrivia[] trivia, int start)
+        {
+            var lineType = LineType.Blank;
+
+            for (int i = start; i < trivia.Length; i++)
+            {
+                var value = trivia[i];
+                if (value.IsKind(SyntaxKind.EndOfLineTrivia))
+                {
+                    return (i, lineType);
+                }
+                else if (value.IsKind(SyntaxKind.WhitespaceTrivia))
+                {
+                    continue;
+                }
+                else if (value.Kind() is SyntaxKind.RegionDirectiveTrivia)
+                {
+                    if (lineType == LineType.Blank)
+                    {
+                        lineType = LineType.SingleComment;
+                    }
+                    continue;
+                }
+                else
+                {
+                    lineType = LineType.NonBlank;
+                }
+            }
+
+            if (lineType == LineType.SingleComment)
+            {
+                return (trivia.Length, LineType.NonBlank);
+            }
+            return (trivia.Length, lineType);
+        }
+
         public static bool SpansMultipleLines(this SyntaxNode node)
         {
             var startLine = node.SyntaxTree.GetLineSpan(node.Span).StartLinePosition.Line;
