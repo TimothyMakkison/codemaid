@@ -9,44 +9,42 @@ namespace CodeMaidShared.Logic.Cleaning
 {
     internal class RoslynCleanup : CSharpSyntaxRewriter
     {
-        public Func<SyntaxNode, SyntaxNode, SyntaxNode> MemberWriter { get; set; }
-
-        // Use this messy functions to ensure that the current node is not a descendant of an interface.
-        // This is to mimic the recursive CSharpAddAccessibilityModifiersDiagnosticAnalyzer.ProcessMemberDeclaration
-        // search where any non structs/classes are ignored.
-        // FindAncestorOrSelf might help but would be slower.
-        // Dont terminate on finding an interface in case I want to roslynize more cleanup functions.
-
-        private bool InsideInterface { get; set; }
-
         public RoslynCleanup()
         {
-            MemberWriter = (_, x) => x;
-            InsideInterface = false;
+            UpdateNodePipeline = (x, _) => base.Visit(x);
+            UpdateTokenPipeline = (x, _) => base.VisitToken(x);
         }
 
-        public override SyntaxNode Visit(SyntaxNode node)
+        private Func<SyntaxNode, SyntaxNode, SyntaxNode> UpdateNodePipeline { get; set; }
+        private Func<SyntaxToken, SyntaxToken, SyntaxToken> UpdateTokenPipeline { get; set; }
+
+        public override SyntaxNode Visit(SyntaxNode original)
         {
-            var inInterface = InsideInterface;
-            if (node.IsKind(SyntaxKind.InterfaceDeclaration))
-                InsideInterface = true;
-
-            var newNode = base.Visit(node);
-
-            if (inInterface == false)
+            if (original == null)
             {
-                newNode = MemberWriter(node, newNode);
+                return original;
             }
+            var newNode = original;
 
-            InsideInterface = inInterface;
+            return UpdateNodePipeline(original, newNode);
+        }
 
-            return newNode;
+        public override SyntaxToken VisitToken(SyntaxToken token)
+        {
+            if (token == null)
+            {
+                return token;
+            }
+            var newToken = token;
+
+            return UpdateTokenPipeline(token, newToken);
         }
 
         public SyntaxNode Process(SyntaxNode root, Workspace workspace)
         {
             var rewrite = Visit(root);
             return rewrite;
+
             //return Formatter.Format(rewrite, SyntaxAnnotation.ElasticAnnotation, workspace);
         }
 
@@ -56,7 +54,7 @@ namespace CodeMaidShared.Logic.Cleaning
 
             Global.Package = package;
 
-            var document = Global.GetActiveDocument();
+            var document = Global.GetActiveDocument(package);
 
             if (document == null || !document.TryGetSyntaxRoot(out SyntaxNode root))
             {
@@ -68,10 +66,26 @@ namespace CodeMaidShared.Logic.Cleaning
 
             var cleaner = new RoslynCleanup();
             RoslynInsertExplicitAccessModifierLogic.Initialize(cleaner, semanticModel, syntaxGenerator);
-            cleaner.Process(root, Global.Workspace);
+            RoslynInsertBlankLine.Initialize(cleaner);
 
-            document = document.WithSyntaxRoot(root);
-            Global.Workspace.TryApplyChanges(document.Project.Solution);
+            var newRoot = cleaner.Process(root, Global.GetWorkspace(package));
+
+            document = document.WithSyntaxRoot(newRoot);
+            Global.GetWorkspace(package).TryApplyChanges(document.Project.Solution);
+        }
+
+        public void AddNodeMiddleware(IRoslynNodeMiddleware middleware)
+        {
+            middleware.SetNodeDelegate(UpdateNodePipeline);
+
+            UpdateNodePipeline = middleware.Invoke;
+        }
+
+        public void AddTokenMiddleware(IRoslynTokenMiddleware middleware)
+        {
+            middleware.SetTokenDelegate(UpdateTokenPipeline);
+
+            UpdateTokenPipeline = middleware.Invoke;
         }
     }
 }

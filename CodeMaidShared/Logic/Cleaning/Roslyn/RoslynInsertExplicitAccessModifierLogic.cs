@@ -23,20 +23,6 @@ namespace CodeMaidShared.Logic.Cleaning
         #region Constructors
 
         /// <summary>
-        /// The singleton instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
-        /// </summary>
-        //private static RoslynInsertExplicitAccessModifierLogic _instance;
-
-        ///// <summary>
-        ///// Gets an instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
-        ///// </summary>
-        ///// <returns>An instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.</returns>
-        //internal static RoslynInsertExplicitAccessModifierLogic GetInstance(AsyncPackage package)
-        //{
-        //    return new RoslynInsertExplicitAccessModifierLogic(semanticModel, syntaxGenerator);
-        //}
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
         /// </summary>
         public RoslynInsertExplicitAccessModifierLogic(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
@@ -49,31 +35,31 @@ namespace CodeMaidShared.Logic.Cleaning
 
         public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
         {
-            var explicitLogic = new RoslynInsertExplicitAccessModifierLogic(model, generator);
-            cleanup.MemberWriter = explicitLogic.ProcessMember;
+            cleanup.AddNodeMiddleware(new AddAccessorCleanupMiddleware(model, generator));
+
             return cleanup;
         }
 
-        public SyntaxNode ProcessMember(SyntaxNode original, SyntaxNode node)
+        public SyntaxNode ProcessMember(SyntaxNode original, SyntaxNode newNode)
         {
-            return node switch
+            return newNode switch
             {
-                DelegateDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnDelegates => AddAccessibility(original, node),
-                EventFieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEvents => AddAccessibility(original, node),
-                EnumDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEnumerations => AddAccessibility(original, node),
-                FieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnFields => AddAccessibility(original, node),
-                InterfaceDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnInterfaces => AddAccessibility(original, node),
+                DelegateDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnDelegates => AddAccessibility(original, newNode),
+                EventFieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEvents => AddAccessibility(original, newNode),
+                EnumDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEnumerations => AddAccessibility(original, newNode),
+                FieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnFields => AddAccessibility(original, newNode),
+                InterfaceDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnInterfaces => AddAccessibility(original, newNode),
 
-                PropertyDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnProperties => AddAccessibility(original, node),
-                MethodDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnMethods => AddAccessibility(original, node),
+                PropertyDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnProperties => AddAccessibility(original, newNode),
+                MethodDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnMethods => AddAccessibility(original, newNode),
 
-                ClassDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnClasses => AddAccessibility(original, node),
-                StructDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnStructs => AddAccessibility(original, node),
+                ClassDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnClasses => AddAccessibility(original, newNode),
+                StructDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnStructs => AddAccessibility(original, newNode),
 
                 //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecords => AddAccessibility(original, node),
                 //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordStructDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecordStructs => AddAccessibility(original, node),
 
-                _ => node,
+                _ => newNode,
             };
         }
 

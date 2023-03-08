@@ -17,11 +17,12 @@ namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
             var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
             var semanticModel = await Document.GetSemanticModelAsync();
 
-            var modifierLogic = new RoslynInsertExplicitAccessModifierLogic(semanticModel, syntaxGenerator);
-            var rewriter = new RoslynCleanup()
-            {
-                MemberWriter = modifierLogic.ProcessMember
-            };
+            var rewriter = new RoslynCleanup();
+            RoslynInsertExplicitAccessModifierLogic.Initialize(rewriter, semanticModel, syntaxGenerator);
+            RoslynInsertBlankLine.Initialize(rewriter);
+
+            InsertTokenPaddingMiddleware.Initialize(rewriter);
+
             var result = rewriter.Process(syntaxTree, Workspace);
 
             Assert.AreEqual(expected, result.ToFullString());
@@ -30,11 +31,11 @@ namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
         public TestWorkspace()
         {
             var source =
-    """
+@"
 public class ThisShouldAppear
 {
 }
-""";
+";
 
             Workspace = new AdhocWorkspace();
 
