@@ -5,13 +5,14 @@ using System;
 
 namespace CodeMaidShared.Logic.Cleaning
 {
-    internal class AddAccessorCleanupMiddleware : IRoslynNodeMiddleware
+    internal class InsertExplicitAccessorMiddleware : IRoslynNodeMiddleware
     {
         private RoslynInsertExplicitAccessModifierLogic _insertAccess;
-        public AddAccessorCleanupMiddleware(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
+        public InsertExplicitAccessorMiddleware(SemanticModel semanticModel)
         {
-            _insertAccess = new RoslynInsertExplicitAccessModifierLogic(semanticModel, syntaxGenerator);
+            _insertAccess = new RoslynInsertExplicitAccessModifierLogic(semanticModel);
         }
+        private Func<SyntaxNode, SyntaxNode, SyntaxNode> Next { get; set; }
 
         // Use this messy functions to ensure that the current node is not a descendant of an interface.
         // This is to mimic the recursive CSharpAddAccessibilityModifiersDiagnosticAnalyzer.ProcessMemberDeclaration
@@ -19,6 +20,13 @@ namespace CodeMaidShared.Logic.Cleaning
         // FindAncestorOrSelf might help but would be slower.
         // Dont terminate on finding an interface in case I want to roslynize more cleanup functions.
         private bool InsideInterface { get; set; }
+
+        public static RoslynCleaner Initialize(RoslynCleaner cleanup, SemanticModel model)
+        {
+            cleanup.AddNodeMiddleware(new InsertExplicitAccessorMiddleware(model));
+
+            return cleanup;
+        }
 
         public SyntaxNode Invoke(SyntaxNode original, SyntaxNode newNode)
         {
@@ -37,14 +45,13 @@ namespace CodeMaidShared.Logic.Cleaning
 
             if (inInterface == false)
             {
-                newNode = _insertAccess.ProcessMember(original, newNode);
+                newNode = _insertAccess.TryAddExplicitModifier(original, newNode);
             }
 
             InsideInterface = inInterface;
             return newNode;
         }
 
-        private Func<SyntaxNode, SyntaxNode, SyntaxNode> Next { get; set; }
         public void SetNodeDelegate(Func<SyntaxNode, SyntaxNode, SyntaxNode> next)
         {
             Next = next;

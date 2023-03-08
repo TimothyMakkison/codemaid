@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using SteveCadwallader.CodeMaid.Logic.Cleaning;
 using SteveCadwallader.CodeMaid.Properties;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace CodeMaidShared.Logic.Cleaning
@@ -27,16 +26,14 @@ namespace CodeMaidShared.Logic.Cleaning
             // Assume that leading trivia must start on a new line.
             // Valid line is a single line with white space and endofline, preceeded by a non blank line.
             // Also check that
-            newToken = TryPadTrivia(newToken, beforeIsOpenToken);
-
-            return newToken;
+            return TryPadTrivia(newToken, beforeIsOpenToken);
         }
         public void SetTokenDelegate(Func<SyntaxToken, SyntaxToken, SyntaxToken> next)
         {
             Next = next;
         }
 
-        public static void Initialize(RoslynCleanup roslynCleanup)
+        public static void Initialize(RoslynCleaner roslynCleanup)
         {
             var tokenPadding = new InsertTokenPaddingMiddleware();
             roslynCleanup.AddTokenMiddleware(tokenPadding);
@@ -48,37 +45,28 @@ namespace CodeMaidShared.Logic.Cleaning
         {
             var trivia = newToken.LeadingTrivia.ToList();
 
-            var insertNewLineList = new List<int>();
             var (triviaLines, last) = RoslynExtensions.ReadTriviaLines(trivia);
+            triviaLines.Add((newToken.Kind(), last));
 
             // Set previous line type to either open brace or a place holder.
             var prevLine = priorIsOpen ? SyntaxKind.OpenBraceToken : SyntaxKind.BadDirectiveTrivia;
+
+            var insertCount = 0;
 
             for (int i = 0; i < triviaLines.Count; i++)
             {
                 var (currentLine, pos) = triviaLines[i];
                 if (TryAddPadding(prevLine, currentLine))
-                    insertNewLineList.Add(pos);
+                {
+                    trivia.Insert(pos + insertCount, SyntaxFactory.EndOfLine(Environment.NewLine));
+                    insertCount++;
+                }
                 prevLine = currentLine;
             }
-            if (triviaLines.Count > 0)
+
+            if (insertCount > 0)
             {
-                // TODO: Inline into ReadTriviaLines?
-                // This assumes that the final trivias is on the same line as the token and is some variant of whitespace followed by token.
-                if (TryAddPadding(prevLine, newToken.Kind()))
-                    insertNewLineList.Add(last);
-            }
-
-            if (insertNewLineList.Count > 0)
-            {
-                insertNewLineList = insertNewLineList.Distinct().ToList();
-
-                for (int i = insertNewLineList.Count - 1; i >= 0; i--)
-                {
-                    trivia.Insert(insertNewLineList[i], SyntaxFactory.EndOfLine(Environment.NewLine));
-                }
-
-                newToken = newToken.WithLeadingTrivia(trivia);
+                return newToken.WithLeadingTrivia(trivia);
             }
 
             return newToken;

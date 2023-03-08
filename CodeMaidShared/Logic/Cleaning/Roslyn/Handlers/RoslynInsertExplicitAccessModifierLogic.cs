@@ -1,7 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Editing;
 using SteveCadwallader.CodeMaid.Logic.Cleaning;
 using SteveCadwallader.CodeMaid.Properties;
 using System;
@@ -16,7 +15,6 @@ namespace CodeMaidShared.Logic.Cleaning
         #region Fields
 
         private readonly SemanticModel _semanticModel;
-        private readonly SyntaxGenerator _syntaxGenerator;
 
         #endregion Fields
 
@@ -25,22 +23,14 @@ namespace CodeMaidShared.Logic.Cleaning
         /// <summary>
         /// Initializes a new instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
         /// </summary>
-        public RoslynInsertExplicitAccessModifierLogic(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
+        public RoslynInsertExplicitAccessModifierLogic(SemanticModel semanticModel)
         {
             _semanticModel = semanticModel;
-            _syntaxGenerator = syntaxGenerator;
         }
 
         #endregion Constructors
 
-        public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
-        {
-            cleanup.AddNodeMiddleware(new AddAccessorCleanupMiddleware(model, generator));
-
-            return cleanup;
-        }
-
-        public SyntaxNode ProcessMember(SyntaxNode original, SyntaxNode newNode)
+        public SyntaxNode TryAddExplicitModifier(SyntaxNode original, SyntaxNode newNode)
         {
             return newNode switch
             {
@@ -80,7 +70,6 @@ namespace CodeMaidShared.Logic.Cleaning
 
             var preferredAccessibility = AddAccessibilityModifiersHelpers.GetPreferredAccessibility(symbol);
             return InternalGenerator.WithAccessibility(newNode, preferredAccessibility);
-            //return _syntaxGenerator.WithAccessibility(newNode, preferredAccessibility);
         }
 
         private static SyntaxNode MapToDeclarator(SyntaxNode node)

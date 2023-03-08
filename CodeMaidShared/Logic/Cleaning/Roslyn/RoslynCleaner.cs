@@ -7,9 +7,9 @@ using System;
 
 namespace CodeMaidShared.Logic.Cleaning
 {
-    internal class RoslynCleanup : CSharpSyntaxRewriter
+    internal class RoslynCleaner : CSharpSyntaxRewriter
     {
-        public RoslynCleanup()
+        public RoslynCleaner()
         {
             UpdateNodePipeline = (x, _) => base.Visit(x);
             UpdateTokenPipeline = (x, _) => base.VisitToken(x);
@@ -46,32 +46,6 @@ namespace CodeMaidShared.Logic.Cleaning
             return rewrite;
 
             //return Formatter.Format(rewrite, SyntaxAnnotation.ElasticAnnotation, workspace);
-        }
-
-        public static void BuildAndrun(AsyncPackage package)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            Global.Package = package;
-
-            var document = Global.GetActiveDocument(package);
-
-            if (document == null || !document.TryGetSyntaxRoot(out SyntaxNode root))
-            {
-                throw new InvalidOperationException();
-            }
-
-            var semanticModel = document.GetSemanticModelAsync().Result;
-            var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
-
-            var cleaner = new RoslynCleanup();
-            RoslynInsertExplicitAccessModifierLogic.Initialize(cleaner, semanticModel, syntaxGenerator);
-            RoslynInsertBlankLine.Initialize(cleaner);
-
-            var newRoot = cleaner.Process(root, Global.GetWorkspace(package));
-
-            document = document.WithSyntaxRoot(newRoot);
-            Global.GetWorkspace(package).TryApplyChanges(document.Project.Solution);
         }
 
         public void AddNodeMiddleware(IRoslynNodeMiddleware middleware)

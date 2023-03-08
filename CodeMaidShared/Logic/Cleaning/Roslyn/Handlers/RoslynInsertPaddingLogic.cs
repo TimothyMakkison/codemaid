@@ -6,28 +6,11 @@ using SteveCadwallader.CodeMaid.Properties;
 namespace CodeMaidShared.Logic.Cleaning
 {
     /// <summary>
-    /// A class for encapsulating insertion of explicit access modifier logic.
+    /// A class for encapsulating insertion of blank line padding logic.
     /// </summary>
-    internal class RoslynInsertBlankLine
+    internal static class RoslynInsertPaddingLogic
     {
-        #region Constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RoslynInsertBlankLine" /> class.
-        /// </summary>
-        public RoslynInsertBlankLine()
-        {
-        }
-
-        #endregion Constructors
-
-        public static RoslynCleanup Initialize(RoslynCleanup cleanup)
-        {
-            cleanup.AddNodeMiddleware(new InsertPaddingCleanupMiddleware());
-            return cleanup;
-        }
-
-        public (SyntaxNode, bool) AddPadding(SyntaxNode original, SyntaxNode newNode, bool previousRequiresPaddingStart, bool isFirst)
+        public static (SyntaxNode node, bool requiresPaddingAfter) TryAddPadding(SyntaxNode original, SyntaxNode newNode, bool previousRequiresPaddingStart, bool isFirst)
         {
             // Assume that whitespace blank lines are considered valid padding.
             // Add padding to start
@@ -71,7 +54,6 @@ namespace CodeMaidShared.Logic.Cleaning
 
                 (SyntaxKind.UsingStatement, { Cleaning_InsertBlankLinePaddingBeforeUsingStatementBlocks: true }) => true,
                 (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration, { Cleaning_InsertBlankLinePaddingBeforeNamespaces: true }) => true,
-                //(RegionDirectiveTriviaSyntax, { Cleaning_InsertBlankLinePaddingBeforeRegionTags: true}) => true,
                 (SyntaxKind.DefaultSwitchLabel or SyntaxKind.CaseSwitchLabel, { Cleaning_InsertBlankLinePaddingBeforeCaseStatements: true }) => true,
                 (SyntaxKind.ClassDeclaration, { Cleaning_InsertBlankLinePaddingBeforeClasses: true }) => true,
                 (SyntaxKind.DelegateDeclaration, { Cleaning_InsertBlankLinePaddingBeforeDelegates: true }) => true,
@@ -106,7 +88,6 @@ namespace CodeMaidShared.Logic.Cleaning
 
                 (SyntaxKind.UsingStatement, { Cleaning_InsertBlankLinePaddingAfterUsingStatementBlocks: true }) => true,
                 (SyntaxKind.NamespaceDeclaration or SyntaxKind.FileScopedNamespaceDeclaration, { Cleaning_InsertBlankLinePaddingAfterNamespaces: true }) => true,
-                //(RegionDirectiveTriviaSyntax, { Cleaning_InsertBlankLinePaddingAfterRegionTags: true}) => true,
                 (SyntaxKind.ClassDeclaration, { Cleaning_InsertBlankLinePaddingAfterClasses: true }) => true,
                 (SyntaxKind.DelegateDeclaration, { Cleaning_InsertBlankLinePaddingAfterDelegates: true }) => true,
                 (SyntaxKind.EnumDeclaration, { Cleaning_InsertBlankLinePaddingAfterEnumerations: true }) => true,
@@ -150,8 +131,6 @@ namespace CodeMaidShared.Logic.Cleaning
 
             return false;
         }
-
-        // TODO handle XML comments?
 
         private static bool HasAnyPadding(SyntaxNode node)
         {

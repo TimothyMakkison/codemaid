@@ -4,17 +4,19 @@ using System;
 
 namespace CodeMaidShared.Logic.Cleaning
 {
-    internal class InsertPaddingCleanupMiddleware : IRoslynNodeMiddleware
+    internal class InsertNodePaddingMiddleware : IRoslynNodeMiddleware
     {
-        private RoslynInsertBlankLine _insertBlankLine;
-        public InsertPaddingCleanupMiddleware()
-        {
-            _insertBlankLine = new RoslynInsertBlankLine();
-        }
+        public InsertNodePaddingMiddleware() { }
 
         private bool ShouldAddPadding { get; set; }
         private bool IsFirstNode { get; set; }
         private Func<SyntaxNode, SyntaxNode, SyntaxNode> Next { get; set; }
+
+        public static RoslynCleaner Initialize(RoslynCleaner cleanup)
+        {
+            cleanup.AddNodeMiddleware(new InsertNodePaddingMiddleware());
+            return cleanup;
+        }
 
         public SyntaxNode Invoke(SyntaxNode original, SyntaxNode newNode)
         {
@@ -26,7 +28,7 @@ namespace CodeMaidShared.Logic.Cleaning
 
             newNode = Next(original, newNode);
 
-            (newNode, ShouldAddPadding) =  _insertBlankLine.AddPadding(original, newNode, shouldAddPadding, isFirst);
+            (newNode, ShouldAddPadding) =  RoslynInsertPaddingLogic.TryAddPadding(original, newNode, shouldAddPadding, isFirst);
 
             // Have to ignore inheritance/type/attribute nodes until the first member node.
             IsFirstNode = isFirst ? newNode is TypeParameterListSyntax or AttributeArgumentListSyntax or BaseListSyntax or TypeParameterConstraintClauseSyntax : false;
