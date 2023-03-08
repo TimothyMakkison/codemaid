@@ -58,6 +58,7 @@ namespace CodeMaidShared.Logic.Cleaning
             // Also check that
 
             newToken = TryPadComments(newToken);
+            newToken = TryPadRegion(newToken);
 
             BeforeIsOpen = false;
             return newToken;
@@ -67,15 +68,25 @@ namespace CodeMaidShared.Logic.Cleaning
         {
             var trivia = newToken.LeadingTrivia.ToArray();
 
-            var prior = LineType.NonBlank;
-            var position = 0;
-
             var list = new List<int>();
 
-            var read = RoslynExtensions.ReadTrivia2(trivia);
+            var (read, last) = RoslynExtensions.ReadTrivia2(trivia);
+
+            var prior = SyntaxKind.BadDirectiveTrivia;
+            for (int i = 0; i < read.Count; i++)
+            {
+                var (val, pos) = read[i];
+                Temp(list, prior, val, pos);
+                prior = val;
+            }
+            if (read.Count > 0)
+            {
+                Temp(list, prior, newToken.Kind(), last);
+            }
 
             if (list.Count > 0)
             {
+                list = list.Distinct().ToList();
                 var newTrivia = newToken.LeadingTrivia.ToList();
                 for (int i = list.Count - 1; i >=0; i--)
                 {
@@ -86,6 +97,27 @@ namespace CodeMaidShared.Logic.Cleaning
             }
 
             return newToken;
+        }
+
+        private static void Temp(List<int> list, SyntaxKind prior, SyntaxKind val, int pos)
+        {
+            if (val == SyntaxKind.RegionDirectiveTrivia && prior is not (SyntaxKind.WhitespaceTrivia or SyntaxKind.OpenBraceToken))
+            {
+                list.Add(pos);
+            }
+            if (val is not (SyntaxKind.WhitespaceTrivia or SyntaxKind.CloseBraceToken) && prior == SyntaxKind.RegionDirectiveTrivia)
+            {
+                list.Add(pos);
+            }
+
+            if (val == SyntaxKind.EndRegionDirectiveTrivia && prior is not (SyntaxKind.WhitespaceTrivia or SyntaxKind.OpenBraceToken))
+            {
+                list.Add(pos);
+            }
+            if (val is not (SyntaxKind.WhitespaceTrivia or SyntaxKind.CloseBraceToken) && prior == SyntaxKind.EndRegionDirectiveTrivia)
+            {
+                list.Add(pos);
+            }
         }
 
         private static SyntaxToken TryPadComments(SyntaxToken newToken)

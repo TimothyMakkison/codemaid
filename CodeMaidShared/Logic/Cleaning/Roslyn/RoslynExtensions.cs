@@ -51,27 +51,40 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
             return (trivia.Length, lineType);
         }
 
-        public static List<(SyntaxKind, int)> ReadTrivia2(SyntaxTrivia[] trivia)
+        public static (List<(SyntaxKind, int)>, int) ReadTrivia2(SyntaxTrivia[] trivia)
         {
             var output = new List<(SyntaxKind, int)>();
             var lineType = SyntaxKind.WhitespaceTrivia;
+            var pos = 0;
 
             for (int i = 0; i < trivia.Length; i++)
             {
                 var value = trivia[i];
                 if (value.IsKind(SyntaxKind.EndOfLineTrivia))
                 {
-                    output.Add((lineType, i));
+                    output.Add((lineType, pos));
+                    pos = i + 1;
                     lineType = SyntaxKind.WhitespaceTrivia;
                 }
                 else if (value.IsKind(SyntaxKind.WhitespaceTrivia))
                 {
                 }
-                else if (value.Kind() is SyntaxKind.SingleLineCommentTrivia or SyntaxKind.SingleLineDocumentationCommentTrivia or SyntaxKind.RegionDirectiveTrivia or SyntaxKind.EndRegionDirectiveTrivia)
+                else if (value.Kind() is SyntaxKind.SingleLineCommentTrivia or SyntaxKind.SingleLineDocumentationCommentTrivia)
                 {
                     if (lineType == SyntaxKind.WhitespaceTrivia)
                     {
                         lineType = value.Kind();
+                    }
+                }
+
+                else if (value.Kind() is SyntaxKind.RegionDirectiveTrivia or SyntaxKind.EndRegionDirectiveTrivia)
+                {
+                    if (lineType == SyntaxKind.WhitespaceTrivia)
+                    {
+                        lineType = value.Kind();
+                        output.Add((lineType, pos));
+                        pos = i + 1;
+                        lineType = SyntaxKind.WhitespaceTrivia;
                     }
                 }
                 else
@@ -85,7 +98,7 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
             //    return (trivia.Length, LineType.NonBlank);
             //}
             //return (trivia.Length, lineType);
-            return output;
+            return (output, pos);
         }
 
         public static (int, LineType) ReadRegion(SyntaxTrivia[] trivia, int start)

@@ -275,5 +275,44 @@ internal
             await testWorkspace.VerifyCleanupAsync(source, expected);
         }
 
+        [TestMethod]
+        public async Task ShouldPadRegionAsync()
+        {
+            var source =
+@"
+#region Temp
+public class Attr : Attribute
+{
+    public void Do() { }
+    #endregion Temp
+    #region Nu
+    public Attr(int i)
+    {
+    }
+    #endregion Nu
+}
+";
+
+            var expected =
+@"
+#region Temp
+
+public class Attr : Attribute
+{
+    public void Do() { }
+
+    #endregion Temp
+
+    #region Nu
+
+    public Attr(int i)
+    {
+    }
+
+    #endregion Nu
+}
+";
+            await testWorkspace.VerifyCleanupAsync(source, expected);
+        }
     }
 }
