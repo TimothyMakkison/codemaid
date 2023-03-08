@@ -31,11 +31,11 @@ namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
         public TestWorkspace()
         {
             var source =
-    """
+@"
 public class ThisShouldAppear
 {
 }
-""";
+";
 
             Workspace = new AdhocWorkspace();
 
