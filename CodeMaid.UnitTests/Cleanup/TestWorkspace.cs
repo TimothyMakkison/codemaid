@@ -17,11 +17,20 @@ namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
             var syntaxGenerator = SyntaxGenerator.GetGenerator(document);
             var semanticModel = await Document.GetSemanticModelAsync();
 
+<<<<<<< HEAD
             var modifierLogic = new RoslynInsertExplicitAccessModifierLogic(semanticModel, syntaxGenerator);
             var rewriter = new RoslynCleanup()
             {
                 MemberWriter = modifierLogic.ProcessMember
             };
+=======
+            var rewriter = new RoslynCleanup();
+            RoslynInsertExplicitAccessModifierLogic.Initialize(rewriter, semanticModel, syntaxGenerator);
+            RoslynInsertBlankLine.Initialize(rewriter);
+
+            InsertTokenPaddingMiddleware.Initialize(rewriter);
+
+>>>>>>> roslyn_middleware
             var result = rewriter.Process(syntaxTree, Workspace);
 
             Assert.AreEqual(expected, result.ToFullString());
@@ -30,11 +39,15 @@ namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
         public TestWorkspace()
         {
             var source =
+<<<<<<< HEAD
     """
+=======
+@"
+>>>>>>> roslyn_middleware
 public class ThisShouldAppear
 {
 }
-""";
+";
 
             Workspace = new AdhocWorkspace();
 

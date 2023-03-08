@@ -12,6 +12,7 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
 {
     internal static class Global
     {
+<<<<<<< HEAD
         static public AsyncPackage Package;
 
         static public T GetService<T>()
@@ -21,15 +22,60 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             dynamic dte = GetService<EnvDTE.DTE>();
+=======
+        public static AsyncPackage Package;
+
+        public static T GetService<T>(AsyncPackage package)
+            => (T)package?.GetServiceAsync(typeof(T))?.Result;
+
+        public static DteDocument GetActiveDteDocument(AsyncPackage package)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            dynamic dte = GetService<EnvDTE.DTE>(package);
+>>>>>>> roslyn_middleware
             return (DteDocument)dte.ActiveDocument;
         }
 
         static IVsStatusbar Statusbar;
 
+<<<<<<< HEAD
         internal static void SetStatusMessage(string message)
+=======
+        internal static void SetStatusMessage(AsyncPackage package, string message)
         {
             if (Statusbar == null)
             {
+                Statusbar = GetService<IVsStatusbar>(package);
+                // StatusBar = Package.GetGlobalService(typeof(IVsStatusbar)) as IVsStatusbar;
+            }
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Statusbar.SetText(message);
+        }
+
+        public static Document GetActiveDocument(AsyncPackage package)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            Solution solution = GetWorkspace(package).CurrentSolution;
+            string activeDocPath = GetActiveDteDocument(package)?.FullName;
+
+            if (activeDocPath != null)
+                return solution.Projects
+                               .SelectMany(x => x.Documents)
+                               .FirstOrDefault(x => x.SupportsSyntaxTree &&
+                                                    x.SupportsSemanticModel &&
+                                                    x.FilePath == activeDocPath);
+            return null;
+        }
+
+        private static VisualStudioWorkspace workspace = null;
+
+        public static VisualStudioWorkspace GetWorkspace(AsyncPackage package)
+>>>>>>> roslyn_middleware
+        {
+            if (Statusbar == null)
+            {
+<<<<<<< HEAD
                 Statusbar = GetService<IVsStatusbar>();
                 // StatusBar = Package.GetGlobalService(typeof(IVsStatusbar)) as IVsStatusbar;
             }
@@ -65,6 +111,10 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
                     workspace = componentModel.GetService<VisualStudioWorkspace>();
                 }
                 return workspace;
+=======
+                IComponentModel componentModel = GetService<SComponentModel>(package) as IComponentModel;
+                workspace = componentModel.GetService<VisualStudioWorkspace>();
+>>>>>>> roslyn_middleware
             }
         }
     }

@@ -23,6 +23,7 @@ namespace CodeMaidShared.Logic.Cleaning
         #region Constructors
 
         /// <summary>
+<<<<<<< HEAD
         /// The singleton instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
         /// </summary>
         //private static RoslynInsertExplicitAccessModifierLogic _instance;
@@ -37,6 +38,8 @@ namespace CodeMaidShared.Logic.Cleaning
         //}
 
         /// <summary>
+=======
+>>>>>>> roslyn_middleware
         /// Initializes a new instance of the <see cref="RoslynInsertExplicitAccessModifierLogic" /> class.
         /// </summary>
         public RoslynInsertExplicitAccessModifierLogic(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
@@ -49,6 +52,7 @@ namespace CodeMaidShared.Logic.Cleaning
 
         public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
         {
+<<<<<<< HEAD
             var explicitLogic = new RoslynInsertExplicitAccessModifierLogic(model, generator);
             cleanup.MemberWriter = explicitLogic.ProcessMember;
             return cleanup;
@@ -69,11 +73,37 @@ namespace CodeMaidShared.Logic.Cleaning
 
                 ClassDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnClasses => AddAccessibility(original, node),
                 StructDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnStructs => AddAccessibility(original, node),
+=======
+            cleanup.AddNodeMiddleware(new AddAccessorCleanupMiddleware(model, generator));
+
+            return cleanup;
+        }
+
+        public SyntaxNode ProcessMember(SyntaxNode original, SyntaxNode newNode)
+        {
+            return newNode switch
+            {
+                DelegateDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnDelegates => AddAccessibility(original, newNode),
+                EventFieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEvents => AddAccessibility(original, newNode),
+                EnumDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnEnumerations => AddAccessibility(original, newNode),
+                FieldDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnFields => AddAccessibility(original, newNode),
+                InterfaceDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnInterfaces => AddAccessibility(original, newNode),
+
+                PropertyDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnProperties => AddAccessibility(original, newNode),
+                MethodDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnMethods => AddAccessibility(original, newNode),
+
+                ClassDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnClasses => AddAccessibility(original, newNode),
+                StructDeclarationSyntax when Settings.Default.Cleaning_InsertExplicitAccessModifiersOnStructs => AddAccessibility(original, newNode),
+>>>>>>> roslyn_middleware
 
                 //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecords => AddAccessibility(original, node),
                 //RecordDeclarationSyntax when node.IsKind(SyntaxKind.RecordStructDeclaration) && Settings.Default.Cleaning_InsertExplicitAccessModifiersOnRecordStructs => AddAccessibility(original, node),
 
+<<<<<<< HEAD
                 _ => node,
+=======
+                _ => newNode,
+>>>>>>> roslyn_middleware
             };
         }
 

@@ -11,12 +11,15 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
 {
     internal static class InternalGenerator
     {
+<<<<<<< HEAD
         private static SyntaxTokenList GetModifierTokens(SyntaxNode declaration)
                => CSharpAccessibilityFacts.GetModifierTokens(declaration);
 
         private static void GetAccessibilityAndModifiers(SyntaxTokenList modifierList, out Accessibility accessibility, out DeclarationModifiers modifiers, out bool isDefault)
              => CSharpAccessibilityFacts.GetAccessibilityAndModifiers(modifierList, out accessibility, out modifiers, out isDefault);
 
+=======
+>>>>>>> roslyn_middleware
         public static SyntaxNode WithAccessibility(SyntaxNode declaration, Accessibility accessibility)
         {
             if (!CSharpAccessibilityFacts.CanHaveAccessibility(declaration) &&
@@ -27,8 +30,14 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
 
             return Isolate(declaration, d =>
             {
+<<<<<<< HEAD
                 var tokens = GetModifierTokens(d);
                 GetAccessibilityAndModifiers(tokens, out _, out var modifiers, out _);
+=======
+                var a = d as TypeDeclarationSyntax;
+                var tokens = CSharpAccessibilityFacts.GetModifierTokens(d);
+                CSharpAccessibilityFacts.GetAccessibilityAndModifiers(tokens, out _, out var modifiers, out _);
+>>>>>>> roslyn_middleware
                 if (modifiers.IsFile && accessibility != Accessibility.NotApplicable)
                 {
                     // If user wants to set accessibility for a file-local declaration, we remove file.
@@ -48,6 +57,19 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
             });
         }
 
+<<<<<<< HEAD
+=======
+        public static SyntaxNode AddBlankLineToStart(SyntaxNode declaration)
+        {
+            var originalTrivia = declaration.GetLeadingTrivia();
+            var newTrivia = originalTrivia.Insert(0, SyntaxFactory.EndOfLine(Environment.NewLine));
+
+            var newNode = declaration.WithLeadingTrivia(newTrivia);
+
+            return newNode;
+        }
+
+>>>>>>> roslyn_middleware
         private static SyntaxNode SetModifierTokens(SyntaxNode declaration, SyntaxTokenList modifiers)
                => declaration switch
                {
@@ -82,6 +104,7 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
             return false;
         }
 
+<<<<<<< HEAD
         private static SyntaxTokenList AsModifierList(Accessibility accessibility, DeclarationModifiers modifiers, SyntaxKind kind)
                 => AsModifierList(accessibility, GetAllowedModifiers(kind) & modifiers);
 
@@ -262,6 +285,8 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
             }
         }
 
+=======
+>>>>>>> roslyn_middleware
         private static SyntaxTokenList AsModifierList(Accessibility accessibility, DeclarationModifiers modifiers)
         {
             var list = new List<SyntaxToken>();
@@ -347,6 +372,10 @@ namespace SteveCadwallader.CodeMaid.Logic.Cleaning
             if (modifiers.IsPartial)
                 list.Add(SyntaxFactory.Token(SyntaxKind.PartialKeyword));
 
+<<<<<<< HEAD
+=======
+            // Modified
+>>>>>>> roslyn_middleware
             list = list.Select(x => x.WithTrailingTrivia(SyntaxFactory.Space)).ToList();
 
             return SyntaxFactory.TokenList(list);
