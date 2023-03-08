@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
 {
+    // TODO: Add setup/teradown to set codemaid settings.
     [TestClass]
     public class AddPaddingTests
     {
@@ -70,7 +71,7 @@ internal class Temp
         }
 
         [TestMethod]
-        public async Task ShouldPadMixed2Async()
+        public async Task ShouldPadMixedTypeDeclaAsync()
         {
             var source =
 @"
@@ -189,7 +190,9 @@ internal class Class<T> where T : struct
         [TestMethod]
         public async Task ShouldBetweenMultLineAccessorAsync()
         {
-            var s = Settings.Default;
+            Settings.Default.Cleaning_InsertBlankLinePaddingBetweenPropertiesMultiLineAccessors = true;
+            Assert.IsTrue(Settings.Default.Cleaning_InsertBlankLinePaddingBetweenPropertiesMultiLineAccessors);
+            
             var source =
 @"
 class Class
@@ -251,6 +254,8 @@ internal
     // Single
     private void Foo()
     {
+        // Should not pad
+        var a = 10;
     }
 }
 ";
@@ -269,6 +274,8 @@ internal
     // Single
     private void Foo()
     {
+        // Should not pad
+        var a = 10;
     }
 }
 ";
@@ -280,38 +287,127 @@ internal
         {
             var source =
 @"
-#region Temp
+#region FirstReg
 public class Attr : Attribute
 {
     public void Do() { }
-    #endregion Temp
-    #region Nu
+    #endregion FirstReg
+    #region SecondReg
     public Attr(int i)
     {
     }
-    #endregion Nu
+    #endregion SecondReg
 }
 ";
 
             var expected =
 @"
-#region Temp
+#region FirstReg
 
 public class Attr : Attribute
 {
     public void Do() { }
 
-    #endregion Temp
+    #endregion FirstReg
 
-    #region Nu
+    #region SecondReg
 
     public Attr(int i)
     {
     }
 
-    #endregion Nu
+    #endregion SecondReg
 }
 ";
+            await testWorkspace.VerifyCleanupAsync(source, expected);
+        }
+
+        [TestMethod]
+        public async Task ShouldPadRegionWithBracesAsync()
+        {
+            var source =
+@"
+public class Attrib : Attribute
+{
+    #region FirstReg
+    public void Do() 
+    {
+        #endregion FirstReg 
+    }
+
+    public void Foo()
+    {
+        #region SecondReg
+    }
+    #endregion SecondReg
+}
+";
+
+            var expected =
+@"
+public class Attrib : Attribute
+{
+    #region FirstReg
+
+    public void Do() 
+    {
+        #endregion FirstReg 
+    }
+
+    public void Foo()
+    {
+        #region SecondReg
+    }
+
+    #endregion SecondReg
+}
+";
+            await testWorkspace.VerifyCleanupAsync(source, expected);
+        }
+
+        [TestMethod]
+        public async Task ShouldPadMixedTypeDeclaAndCommentsAsync()
+        {
+            var source =
+@"
+internal struct MyStruct
+{
+}
+/// <summary>
+/// 
+/// </summary>
+internal struct Struct
+{
+}
+// Should Pad
+internal enum MyEnum
+{
+    Some = 0,
+    None = 1,
+}
+";
+
+            var expected =
+@"
+internal struct MyStruct
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+internal struct Struct
+{
+}
+
+// Should Pad
+internal enum MyEnum
+{
+    Some = 0,
+    None = 1,
+}
+";
+
             await testWorkspace.VerifyCleanupAsync(source, expected);
         }
     }

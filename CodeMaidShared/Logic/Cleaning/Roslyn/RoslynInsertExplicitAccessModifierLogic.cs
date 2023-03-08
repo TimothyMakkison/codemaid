@@ -35,7 +35,7 @@ namespace CodeMaidShared.Logic.Cleaning
 
         public static RoslynCleanup Initialize(RoslynCleanup cleanup, SemanticModel model, SyntaxGenerator generator)
         {
-            cleanup.AddMiddleware(new AddAccessorCleanupMiddleware(model, generator));
+            cleanup.AddNodeMiddleware(new AddAccessorCleanupMiddleware(model, generator));
 
             return cleanup;
         }

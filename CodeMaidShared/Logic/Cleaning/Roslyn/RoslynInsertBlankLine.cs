@@ -23,7 +23,7 @@ namespace CodeMaidShared.Logic.Cleaning
 
         public static RoslynCleanup Initialize(RoslynCleanup cleanup)
         {
-            cleanup.AddMiddleware(new InsertPaddingCleanupMiddleware());
+            cleanup.AddNodeMiddleware(new InsertPaddingCleanupMiddleware());
             return cleanup;
         }
 

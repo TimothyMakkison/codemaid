@@ -4,7 +4,7 @@ using System;
 
 namespace CodeMaidShared.Logic.Cleaning
 {
-    internal class InsertPaddingCleanupMiddleware : IRoslynMiddleware
+    internal class InsertPaddingCleanupMiddleware : IRoslynNodeMiddleware
     {
         private RoslynInsertBlankLine _insertBlankLine;
         public InsertPaddingCleanupMiddleware()
@@ -33,7 +33,7 @@ namespace CodeMaidShared.Logic.Cleaning
             return newNode;
         }
 
-        public void SetDelegate(Func<SyntaxNode, SyntaxNode, SyntaxNode> next)
+        public void SetNodeDelegate(Func<SyntaxNode, SyntaxNode, SyntaxNode> next)
         {
             Next = next;
         }

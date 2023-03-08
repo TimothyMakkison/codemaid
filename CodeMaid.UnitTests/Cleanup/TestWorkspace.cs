@@ -21,6 +21,8 @@ namespace SteveCadwallader.CodeMaid.UnitTests.Cleanup
             RoslynInsertExplicitAccessModifierLogic.Initialize(rewriter, semanticModel, syntaxGenerator);
             RoslynInsertBlankLine.Initialize(rewriter);
 
+            InsertTokenPaddingMiddleware.Initialize(rewriter);
+
             var result = rewriter.Process(syntaxTree, Workspace);
 
             Assert.AreEqual(expected, result.ToFullString());

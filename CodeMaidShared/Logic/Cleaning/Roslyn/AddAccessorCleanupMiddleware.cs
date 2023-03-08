@@ -5,7 +5,7 @@ using System;
 
 namespace CodeMaidShared.Logic.Cleaning
 {
-    internal class AddAccessorCleanupMiddleware : IRoslynMiddleware
+    internal class AddAccessorCleanupMiddleware : IRoslynNodeMiddleware
     {
         private RoslynInsertExplicitAccessModifierLogic _insertAccess;
         public AddAccessorCleanupMiddleware(SemanticModel semanticModel, SyntaxGenerator syntaxGenerator)
@@ -45,7 +45,7 @@ namespace CodeMaidShared.Logic.Cleaning
         }
 
         private Func<SyntaxNode, SyntaxNode, SyntaxNode> Next { get; set; }
-        public void SetDelegate(Func<SyntaxNode, SyntaxNode, SyntaxNode> next)
+        public void SetNodeDelegate(Func<SyntaxNode, SyntaxNode, SyntaxNode> next)
         {
             Next = next;
         }
